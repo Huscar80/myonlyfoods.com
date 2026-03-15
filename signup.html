@@ -136,6 +136,8 @@
   document.getElementById('signupForm').addEventListener('submit', (e) => {
     e.preventDefault();
 
+    console.log("Form caught! No refresh should happen now.");
+
     // Get the name from your "Full Name" input field
     const fullName = document.getElementById('fullname').value;
     const email = document.getElementById('email').value;
