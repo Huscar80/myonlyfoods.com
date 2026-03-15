@@ -122,17 +122,12 @@
     </div>
 
 <script type="module">
+  // 1. Added 'updateProfile' to the import list
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  // PASTE YOUR ACTUAL CONFIG FROM FIREBASE HERE
   const firebaseConfig = {
-    apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI", 
-    authDomain: "myonlyfoods-96425.firebaseapp.com",
-    projectId: "myonlyfoods-96425",
-    storageBucket: "myonlyfoods-96425.firebasestorage.app",
-    messagingSenderId: "105...",
-    appId: "1:790098672248:web:cdac6a3911a7ba82860b8d"
+    // ... PASTE YOUR ACTUAL CONFIG HERE ...
   };
 
   const app = initializeApp(firebaseConfig);
@@ -141,21 +136,20 @@
   document.getElementById('signupForm').addEventListener('submit', (e) => {
     e.preventDefault();
 
+    // Get the name from your "Full Name" input field
+    const fullName = document.getElementById('fullname').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
 
-    // 1. Basic check to make sure passwords match
-    if (password !== confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-    }
-
-    // 2. Tell Firebase to create the user
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        alert("Welcome to the Table!");
-        window.location.href = "dashboard.html";
+        // 2. NEW STEP: Attach the name to the user's profile
+        updateProfile(userCredential.user, {
+          displayName: fullName
+        }).then(() => {
+          alert("Profile Created, Chef " + fullName + "!");
+          window.location.href = "dashboard.html";
+        });
       })
       .catch((error) => {
         alert("Signup Error: " + error.message);
