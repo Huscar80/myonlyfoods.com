@@ -86,5 +86,13 @@
         &copy; 2026 myonlyfoods. All rights reserved.
     </div>
 
+        <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            // This is where we tell the browser to go to the dashboard
+            window.location.href = "dashboard.html"; 
+        });
+    </script>
+
 </body>
 </html>
