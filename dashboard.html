@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | myonlyfoods</title>
+    <style>
+        :root {
+            --logo-cream: #f8f6f1; 
+            --primary-green: #2e5a35;
+            --dark-green: #1e3d24;
+            --white: #ffffff;
+            --text-dark: #333;
+            --accent-gold: #c5a059; /* A touch of gold for premium feel */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--logo-cream);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-green);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+
+        .nav-item:hover { color: white; padding-left: 5px; }
+
+        /* Main Content Area */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .welcome-msg h1 { margin: 0; color: var(--primary-green); }
+
+        /* Grid Layout for Features */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border-left: 5px solid var(--accent-gold);
+        }
+
+        .stat-card h3 { margin-top: 0; color: var(--text-dark); }
+        .stat-card p { color: #666; font-size: 0.9rem; line-height: 1.5; }
+
+        .btn-action {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--primary-green);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Responsive for Mobile */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; box-sizing: border-box; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>MYONLYFOODS</h2>
+        <a href="#" class="nav-item">My Pantry</a>
+        <a href="#" class="nav-item">Recipe Book</a>
+        <a href="#" class="nav-item">Sourcing Map</a>
+        <a href="#" class="nav-item">Account Settings</a>
+        <a href="index.html" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="welcome-msg">
+                <h1>Hello, Chef</h1>
+                <p>Saturday, March 14, 2026</p>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Curated Recipes</h3>
+                <p>Explore recipes tailored to your unique dietary profile and flavor preferences.</p>
+                <a href="#" class="btn-action">Explore Now</a>
+            </div>
+
+            <div class="stat-card">
+                <h3>Ingredient Sourcing</h3>
+                <p>Track the origin of your ingredients from farm to table with total transparency.</p>
+                <a href="#" class="btn-action">View Sources</a>
+            </div>
+
+            <div class="stat-card">
+                <h3>Your Community</h3>
+                <p>Connect with other culinary enthusiasts sharing your food philosophy.</p>
+                <a href="#" class="btn-action">Join Discussion</a>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  // USE THE SAME CONFIG HERE AS YOUR LOGIN/SIGNUP
+  const firebaseConfig = {
+    apiKey: "AIzaSy...", 
+    authDomain: "myonlyfoods-96425.firebaseapp.com",
+    projectId: "myonlyfoods-96425",
+    // ... fill in the rest of your keys
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // 1. Check if a user is logged in
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in, let's update the "Hello, Chef" text
+      const welcomeHeader = document.querySelector('.welcome-msg h1');
+      welcomeHeader.innerHTML = `Welcome back, ${user.email.split('@')[0]}!`;
+    } else {
+      // No user is signed in, kick them back to the login page
+      window.location.href = "index.html";
+    }
+  });
+
+  // 2. Make the Logout button actually work
+  const logoutBtn = document.querySelector('a[href="index.html"]'); 
+  logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    signOut(auth).then(() => {
+      window.location.href = "index.html";
+    });
+  });
+</script>
+
+</body>
+</html>
