@@ -146,40 +146,47 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+  // Your Firebase Configuration
   const firebaseConfig = {
-  apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-  authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-  projectId: "myonlyfoods-e9ee8",
-  storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-  messagingSenderId: "790098672248",
-  appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
+    apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+    authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+    projectId: "myonlyfoods-e9ee8",
+    storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+    messagingSenderId: "790098672248",
+    appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // This is the brain of the dashboard
-onAuthStateChanged(auth, (user) => {
+  // Monitor Auth State
+  onAuthStateChanged(auth, (user) => {
     if (user) {
-      // Use the displayName we saved, or fall back to email if it's missing
-      const nameToShow = user.displayName || user.email.split('@')[0];
+      console.log("Logged in as:", user.displayName || user.email);
       
-      const greeting = document.getElementById('user-greeting');
-      if (greeting) {
-        greeting.innerText = `Welcome back, ${nameToShow}!`;
+      // Personalize the greeting
+      const greetingElement = document.getElementById('user-greeting');
+      if (greetingElement) {
+          // It will use the Full Name if available, otherwise the email prefix
+          const name = user.displayName || user.email.split('@')[0];
+          greetingElement.innerText = `Welcome back, ${name}!`;
       }
     } else {
+      // Not logged in? Boot them out.
       window.location.href = "index.html";
     }
   });
 
-  // Logout Logic
-  document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
-    e.preventDefault();
-    signOut(auth).then(() => {
-      window.location.href = "index.html";
+  // Handle Logout (make sure your logout link has id="logoutBtn")
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      });
     });
-  });
+  }
 </script>
 
 </body>
