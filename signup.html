@@ -122,49 +122,56 @@
     </div>
 
 <script type="module">
-  // 1. Added 'updateProfile' to the import list
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
   const firebaseConfig = {
-  apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-  authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-  projectId: "myonlyfoods-e9ee8",
-  storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-  messagingSenderId: "790098672248",
-  appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
+    apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+    authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+    projectId: "myonlyfoods-e9ee8",
+    storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+    messagingSenderId: "790098672248",
+    appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  document.getElementById('signupForm').addEventListener('submit', (e) => {
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Get the name from your "Full Name" input field
+    // 1. Grab all the values from the form
     const fullName = document.getElementById('fullname').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
 
-    createUserWithEmailAndPassword(auth, email, password)
-  .then(async (userCredential) => { // Added 'async' here
-    console.log("Step 1: User created");
+    // 2. Security Check: Do the passwords match?
+    if (password !== confirmPassword) {
+      alert("Passwords do not match, Chef!");
+      return; // This stops the script here
+    }
 
-    // 2. We use 'await' to make sure the name is saved BEFORE we move on
-    await updateProfile(userCredential.user, {
-      displayName: fullName
-    });
+    try {
+      // 3. Create the account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("User created successfully!");
 
-    console.log("Step 2: Name saved to Firebase:", fullName);
-    alert("Profile Created, Chef " + fullName + "!");
-    
-    // 3. Now we move to the dashboard
-    window.location.href = "dashboard.html";
-  })
-  .catch((error) => {
-    console.error("Signup Error:", error.message);
-    alert("Signup Error: " + error.message);
-  });
+      // 4. Update the profile with the Full Name
+      await updateProfile(userCredential.user, {
+        displayName: fullName
+      });
+
+      console.log("Profile name updated to:", fullName);
+      alert("Welcome to the kitchen, " + fullName + "!");
+      
+      // 5. Go to the dashboard
+      window.location.href = "dashboard.html";
+
+    } catch (error) {
+      console.error("Signup Error:", error.code);
+      alert("Error: " + error.message);
+    }
   });
 </script>
 
