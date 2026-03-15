@@ -147,18 +147,24 @@
     const password = document.getElementById('password').value;
 
     createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // 2. NEW STEP: Attach the name to the user's profile
-        updateProfile(userCredential.user, {
-          displayName: fullName
-        }).then(() => {
-          alert("Profile Created, Chef " + fullName + "!");
-          window.location.href = "dashboard.html";
-        });
-      })
-      .catch((error) => {
-        alert("Signup Error: " + error.message);
-      });
+  .then(async (userCredential) => { // Added 'async' here
+    console.log("Step 1: User created");
+
+    // 2. We use 'await' to make sure the name is saved BEFORE we move on
+    await updateProfile(userCredential.user, {
+      displayName: fullName
+    });
+
+    console.log("Step 2: Name saved to Firebase:", fullName);
+    alert("Profile Created, Chef " + fullName + "!");
+    
+    // 3. Now we move to the dashboard
+    window.location.href = "dashboard.html";
+  })
+  .catch((error) => {
+    console.error("Signup Error:", error.message);
+    alert("Signup Error: " + error.message);
+  });
   });
 </script>
 
