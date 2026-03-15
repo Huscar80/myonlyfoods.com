@@ -146,32 +146,29 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  // USE THE SAME CONFIG HERE AS YOUR LOGIN/SIGNUP
   const firebaseConfig = {
-    apiKey: "AIzaSy...", 
-    authDomain: "myonlyfoods-96425.firebaseapp.com",
-    projectId: "myonlyfoods-96425",
-    // ... fill in the rest of your keys
+    // ... PASTE YOUR ACTUAL CONFIG HERE ...
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // 1. Check if a user is logged in
+  // This is the brain of the dashboard
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      // User is signed in, let's update the "Hello, Chef" text
+      console.log("User is authenticated:", user.email);
       const welcomeHeader = document.querySelector('.welcome-msg h1');
+      // Personalize the greeting
       welcomeHeader.innerHTML = `Welcome back, ${user.email.split('@')[0]}!`;
     } else {
-      // No user is signed in, kick them back to the login page
+      console.log("No user found. Redirecting...");
+      // ONLY redirect if we are sure there is no user
       window.location.href = "index.html";
     }
   });
 
-  // 2. Make the Logout button actually work
-  const logoutBtn = document.querySelector('a[href="index.html"]'); 
-  logoutBtn.addEventListener('click', (e) => {
+  // Logout Logic
+  document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
     e.preventDefault();
     signOut(auth).then(() => {
       window.location.href = "index.html";
