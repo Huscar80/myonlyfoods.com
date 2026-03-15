@@ -127,7 +127,12 @@
   import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
   const firebaseConfig = {
-    // ... PASTE YOUR ACTUAL CONFIG HERE ...
+  apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+  authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+  projectId: "myonlyfoods-e9ee8",
+  storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+  messagingSenderId: "790098672248",
+  appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
   };
 
   const app = initializeApp(firebaseConfig);
@@ -135,8 +140,6 @@
 
   document.getElementById('signupForm').addEventListener('submit', (e) => {
     e.preventDefault();
-
-    console.log("Form caught! No refresh should happen now.");
 
     // Get the name from your "Full Name" input field
     const fullName = document.getElementById('fullname').value;
