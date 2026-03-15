@@ -3,95 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>myonlyfoods | Coming Soon</title>
+    <title>Login | myonlyfoods</title>
     <style>
         :root {
-            --primary-green: #2e5a35; /* Professional forest green */
+            --logo-cream: #f8f6f1; 
+            --primary-green: #2e5a35;
             --white: #ffffff;
-            --light-gray: #f4f4f4;
+            --text-dark: #333;
+            --gray-border: #e1e1e1;
         }
 
-        body, html {
-            height: 100%;
+        body {
             margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--white);
-            color: var(--primary-green);
+            background-color: var(--logo-cream);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Changed to min-height for better scrolling on mobile */
+        }
+
+        .login-card {
+            background: var(--logo-cream);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+            width: 90%;
+            max-width: 400px;
             text-align: center;
+            border: 1px solid rgba(0,0,0,0.02); /* Very subtle edge */
         }
 
-        .container {
-            padding: 20px;
-            max-width: 600px;
+        .logo-container {
+            margin-bottom: 25px;
         }
 
-        .logo {
-            max-width: 180px;
+        .logo-img {
+            max-width: 150px;
             height: auto;
-            margin-bottom: 30px;
-            /* Placeholder styling if image is missing */
-            border-radius: 15px;
         }
 
         h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
+            color: var(--primary-green);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
         }
 
         p {
-            font-size: 1.2rem;
             color: #555;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
-        .cta-button {
-            background-color: var(--primary-green);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 30px;
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--white);
+            border: 1px solid var(--gray-border);
+            border-radius: 6px;
+            box-sizing: border-box; 
+            font-size: 1rem;
+        }
+
+        /* BRINGING THE BUTTON BACK TO LIFE */
+        .login-btn {
+            display: block; /* Ensures it takes up space */
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-green) !important; /* Force the green color */
+            color: white !important;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
             font-weight: bold;
-            transition: opacity 0.3s;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.1s, opacity 0.3s;
         }
 
-        .cta-button:hover {
+        .login-btn:hover {
             opacity: 0.9;
         }
 
-        .footer {
-            position: absolute;
-            bottom: 30px;
-            font-size: 0.9rem;
-            color: #999;
+        .footer-links {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .footer-links a {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <img src="mainlogo.jpg" alt="myonlyfoods logo" class="logo">
+    <div class="login-card">
+        <div class="logo-container">
+            <img src="images/mainlogo.jpg" alt="myonlyfoods logo" class="logo-img">
+        </div>
+        
+        <h1>Welcome Back</h1>
+        <p>Log in to your personal culinary portal.</p>
 
-        <h1>Coming Soon</h1>
-        <p>Your personal culinary experience is being prepared. <br> 
-        Stay tuned for the launch of <strong>myonlyfoods</strong>.</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="name@email.com" required>
+            </div>
 
-        <a href="mailto:hello@myonlyfoods.com" class="cta-button">Get Notified</a>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+        </form>
+
+        <div class="footer-links">
+            <a href="#">Forgot password?</a> 
+            <span style="margin: 0 8px;">•</span>
+            <a href="signup.html">Create account</a>
+        </div>
     </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    <div class="footer">
-        &copy; 2026 myonlyfoods. All rights reserved.
-    </div>
+  // PASTE YOUR DATA FROM THE SCREENSHOT HERE:
+  const firebaseConfig = {
+    apiKey: "AIzaSy...", 
+    authDomain: "myonlyfoods-96425.firebaseapp.com",
+    projectId: "myonlyfoods-96425",
+    storageBucket: "myonlyfoods-96425.firebasestorage.app",
+    messagingSenderId: "105...",
+    appId: "1:105...:web:..."
+  };
 
-        <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            // This is where we tell the browser to go to the dashboard
-            window.location.href = "dashboard.html"; 
-        });
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // The Login Logic
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        alert("Login failed: " + error.message);
+      });
+  });
     </script>
 
 </body>
