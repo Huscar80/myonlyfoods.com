@@ -154,15 +154,16 @@
   const auth = getAuth(app);
 
   // This is the brain of the dashboard
-  onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, (user) => {
     if (user) {
-      console.log("User is authenticated:", user.email);
-      const welcomeHeader = document.querySelector('.welcome-msg h1');
-      // Personalize the greeting
-      welcomeHeader.innerHTML = `Welcome back, ${user.email.split('@')[0]}!`;
+      // Use the displayName we saved, or fall back to email if it's missing
+      const nameToShow = user.displayName || user.email.split('@')[0];
+      
+      const greeting = document.getElementById('user-greeting');
+      if (greeting) {
+        greeting.innerText = `Welcome back, ${nameToShow}!`;
+      }
     } else {
-      console.log("No user found. Redirecting...");
-      // ONLY redirect if we are sure there is no user
       window.location.href = "index.html";
     }
   });
