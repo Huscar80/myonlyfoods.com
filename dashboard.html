@@ -9,18 +9,16 @@
             --logo-cream: #f8f6f1; 
             --primary-green: #2e5a35;
             --white: #ffffff;
-            --text-dark: #333;
             --accent-gold: #c5a059;
         }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--logo-cream); color: var(--text-dark); display: flex; min-height: 100vh; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--logo-cream); display: flex; min-height: 100vh; }
         .sidebar { width: 250px; background-color: var(--primary-green); color: white; display: flex; flex-direction: column; padding: 30px 20px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
-        .nav-item { color: rgba(255,255,255,0.8); text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); transition: 0.3s; cursor: pointer; }
-        .nav-item:hover { color: white; padding-left: 5px; }
+        .nav-item { color: rgba(255,255,255,0.8); text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
         .main-content { flex-grow: 1; padding: 40px; }
         .welcome-msg h1 { margin: 0; color: var(--primary-green); }
         .stat-card { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border-left: 5px solid var(--accent-gold); max-width: 800px; }
-        .btn-action { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: var(--primary-green); color: white; border-radius: 5px; font-size: 0.8rem; font-weight: bold; border: none; cursor: pointer; }
-        input, textarea { box-sizing: border-box; width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .btn-action { margin-top: 15px; padding: 10px 20px; background-color: var(--primary-green); color: white; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
+        input { box-sizing: border-box; width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd; }
         @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } }
     </style>
 </head>
@@ -28,17 +26,17 @@
 
     <div class="sidebar">
         <h2>MYONLYFOODS</h2>
-        <a class="nav-item" id="nav-pantry">My Pantry</a>
-        <a class="nav-item" id="nav-cookbook">Cookbook</a>
-        <a class="nav-item" id="nav-leftovers">Leftovers</a>
-        <a class="nav-item" id="nav-about">About Me</a>
+        <a class="nav-item" onclick="showSection('pantry')">My Pantry</a>
+        <a class="nav-item" onclick="showSection('cookbook')">Cookbook</a>
+        <a class="nav-item" onclick="showSection('leftovers')">Leftovers</a>
+        <a class="nav-item" onclick="showSection('about')">About Me</a>
         <a class="nav-item" id="logout-btn" style="margin-top: auto; color: #ffbaba;">Logout</a>
     </div>
 
     <div class="main-content">
         <div class="header">
             <div class="welcome-msg">
-                <h1>Hello, Chef</h1>
+                <h1 id="header-greeting">Hello, Chef</h1>
                 <p>Monday, March 16, 2026</p>
             </div>
         </div>
@@ -48,20 +46,20 @@
                 <div class="stat-card">
                     <div id="profile-view" style="text-align: center;">
                         <div id="avatar-container" style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
-                            <span id="profile-initials" style="font-size: 3rem; color: #999; font-weight: bold;">?</span>
+                            <span id="profile-initials" style="font-size: 3rem; color: #999;">?</span>
                         </div>
 
-                        <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Chef Name</h2>
-                        <p><strong>📍 Location:</strong> <span id="display-location">Not set</span></p>
+                        <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Loading...</h2>
+                        <p><strong>📍 Location:</strong> <span id="display-location">Loading...</span></p>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
                             <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE FOOD</p>
-                                <span id="display-fav-food">Not set</span>
+                                <span id="display-fav-food">Loading...</span>
                             </div>
                             <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE RESTAURANT</p>
-                                <span id="display-fav-restaurant">Not set</span>
+                                <span id="display-fav-restaurant">Loading...</span>
                             </div>
                         </div>
                         <button onclick="toggleEdit(true)" class="btn-action" style="width:100%;">Edit Profile</button>
@@ -69,20 +67,20 @@
 
                     <div id="profile-edit" style="display: none;">
                         <h3>Update Your Chef Profile</h3>
-                        <div style="margin-bottom: 10px;"><label>Name:</label><input type="text" id="edit-name"></div>
-                        <div style="margin-bottom: 10px;"><label>Location:</label><input type="text" id="edit-location"></div>
-                        <div style="margin-bottom: 10px;"><label>Favorite Food:</label><input type="text" id="edit-fav-food"></div>
-                        <div style="margin-bottom: 10px;"><label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant"></div>
-                        <div style="margin-bottom: 15px;"><label>Change Profile Picture:</label><input type="file" id="profile-upload" accept="image/*"></div>
+                        <label>Name:</label><input type="text" id="edit-name">
+                        <label>Location:</label><input type="text" id="edit-location">
+                        <label>Favorite Food:</label><input type="text" id="edit-fav-food">
+                        <label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant">
+                        <label>Profile Picture:</label><input type="file" id="profile-upload" accept="image/*">
                         
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
                             <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
                             <button onclick="toggleEdit(false)" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div id="section-pantry" class="content-section" style="display:none;"><div class="stat-card"><h3>My Pantry</h3></div></div>
             <div id="section-cookbook" class="content-section" style="display:none;"><div class="stat-card"><h3>My Cookbook</h3></div></div>
             <div id="section-leftovers" class="content-section" style="display:none;"><div class="stat-card"><h3>Leftovers</h3></div></div>
@@ -111,37 +109,49 @@
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            console.log("Logged in as:", user.uid);
+            
+            // This pulls the data specific to THIS user's UID
             onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                const data = docSnap.data() || {};
-                const chefName = data.name || "Chef";
-                
-                document.querySelector('.welcome-msg h1').innerText = `Hello, ${chefName}`;
-                
-                // IMAGE DISPLAY LOGIC
-                const avatarContainer = document.getElementById('avatar-container');
-                if (data.photoURL) {
-                    avatarContainer.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
-                } else {
-                    avatarContainer.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999; font-weight: bold;">${chefName.charAt(0).toUpperCase()}</span>`;
-                }
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Update Text
+                    document.getElementById('header-greeting').innerText = `Hello, ${data.name || 'Chef'}`;
+                    document.getElementById('display-name').innerText = data.name || "Chef Name";
+                    document.getElementById('display-location').innerText = data.location || "Not set";
+                    document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+                    document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
 
-                document.getElementById('display-name').innerText = chefName;
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
-                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
-                
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-fav-food').value = data.favFood || "";
-                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+                    // Update Image/Initials
+                    const avatar = document.getElementById('avatar-container');
+                    if (data.photoURL) {
+                        avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
+                    } else {
+                        const initial = (data.name || "C").charAt(0).toUpperCase();
+                        avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
+                    }
+
+                    // Pre-fill edit fields
+                    document.getElementById('edit-name').value = data.name || "";
+                    document.getElementById('edit-location').value = data.location || "";
+                    document.getElementById('edit-fav-food').value = data.favFood || "";
+                    document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+                } else {
+                    // If no document exists yet
+                    document.getElementById('display-name').innerText = "New Chef";
+                    document.getElementById('display-location').innerText = "Not set";
+                    document.getElementById('display-fav-food').innerText = "Not set";
+                    document.getElementById('display-fav-restaurant').innerText = "Not set";
+                }
             });
 
-            window.toggleEdit = (isEditing) => {
-                document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
-                document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
-            };
-
+            // SAVE BUTTON
             document.getElementById('save-profile-btn').onclick = async () => {
+                const btn = document.getElementById('save-profile-btn');
+                btn.innerText = "Saving...";
+                btn.disabled = true;
+
                 const file = document.getElementById('profile-upload').files[0];
                 let photoURL = null;
 
@@ -157,33 +167,36 @@
                         location: document.getElementById('edit-location').value,
                         favFood: document.getElementById('edit-fav-food').value,
                         favRestaurant: document.getElementById('edit-fav-restaurant').value,
-                        updatedAt: new Date()
                     };
-
                     if (photoURL) profileData.photoURL = photoURL;
 
                     await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-                    alert("Chef Profile Updated!");
                     toggleEdit(false);
-                } catch (e) { 
+                } catch (e) {
                     console.error(e);
-                    alert("Error. Make sure Storage Rules are set to public in Firebase.");
+                    alert("Error saving profile. Check console.");
+                } finally {
+                    btn.innerText = "Save Changes";
+                    btn.disabled = false;
                 }
             };
+
         } else {
             window.location.href = "index.html";
         }
     });
 
-    // Navigation
+    // Helper functions
+    window.toggleEdit = (isEditing) => {
+        document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+        document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+    };
+
     window.showSection = (sectionId) => {
         document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
         document.getElementById(`section-${sectionId}`).style.display = 'block';
     };
-    document.getElementById('nav-pantry').onclick = () => showSection('pantry');
-    document.getElementById('nav-cookbook').onclick = () => showSection('cookbook');
-    document.getElementById('nav-leftovers').onclick = () => showSection('leftovers');
-    document.getElementById('nav-about').onclick = () => showSection('about');
+
     document.getElementById('logout-btn').onclick = () => signOut(auth);
 </script>
 </body>
