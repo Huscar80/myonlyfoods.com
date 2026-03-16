@@ -276,7 +276,7 @@
 
                     const avatar = document.getElementById('avatar-container');
                     if (data.photoURL) {
-                        avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
+                        avatar.innerHTML = `<img src="${data.photoURL}?t=${new Date().getTime()}" style="width:100%; height:100%; object-fit:cover;">`;
                     } else {
                         const initial = chefName.charAt(0).toUpperCase();
                         avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
