@@ -110,13 +110,13 @@
         <a href="#" class="nav-item">Recipe Book</a>
         <a href="#" class="nav-item">Sourcing Map</a>
         <a href="#" class="nav-item">Account Settings</a>
-        <a href="index.html" id="logoutBtn" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
+        <a href="index.html" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
     </div>
 
     <div class="main-content">
         <div class="header">
             <div class="welcome-msg">
-                <h1 id="user-greeting">Hello, Chef</h1>
+                <h1>Hello, Chef</h1>
                 <p>Saturday, March 14, 2026</p>
             </div>
         </div>
@@ -134,11 +134,25 @@
                 <a href="#" class="btn-action">View Sources</a>
             </div>
 
-            <div class="stat-card">
-                <h3>Your Community</h3>
-                <p>Connect with other culinary enthusiasts sharing your food philosophy.</p>
-                <a href="#" class="btn-action">Join Discussion</a>
+            <div class="stat-card" id="profile-section">
+                <div id="profile-view">
+                <h3 id="display-name">Chef Name</h3>
+                <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
+                <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
+                <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
             </div>
+
+            <div id="profile-edit" style="display: none;">
+            <h3>Update Profile</h3>
+            <input type="text" id="edit-name" placeholder="Full Name" style="width:100%; margin-bottom:10px; padding:8px;">
+            <input type="text" id="edit-location" placeholder="City, State" style="width:100%; margin-bottom:10px; padding:8px;">
+            <textarea id="edit-favorites" placeholder="Favorite dinners, restaurants..." style="width:100%; margin-bottom:10px; padding:8px;"></textarea>
+        
+        <div style="display: flex; gap: 10px;">
+            <button id="save-profile-btn" class="btn-action">Save Changes</button>
+            <button onclick="toggleEdit(false)" class="btn-action" style="background:#888;">Cancel</button>
+        </div>
+
         </div>
     </div>
 
