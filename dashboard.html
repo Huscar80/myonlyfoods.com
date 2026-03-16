@@ -147,39 +147,52 @@
             });
 
             // SAVE BUTTON
-            document.getElementById('save-profile-btn').onclick = async () => {
-                const btn = document.getElementById('save-profile-btn');
-                btn.innerText = "Saving...";
-                btn.disabled = true;
+document.getElementById('save-profile-btn').onclick = async () => {
+    const saveBtn = document.getElementById('save-profile-btn');
+    const file = document.getElementById('profile-upload').files[0];
+    let photoURL = null;
 
-                const file = document.getElementById('profile-upload').files[0];
-                let photoURL = null;
+    // 1. LIMITATION: Check file size (2MB = 2 * 1024 * 1024 bytes)
+    if (file && file.size > 2097152) {
+        alert("File is too large! Please choose an image under 2MB.");
+        return; // Stops the function here
+    }
 
-                try {
-                    if (file) {
-                        const storageRef = ref(storage, `profile_pics/${user.uid}`);
-                        await uploadBytes(storageRef, file);
-                        photoURL = await getDownloadURL(storageRef);
-                    }
+    // 2. VISUAL FEEDBACK: Disable button and show status
+    saveBtn.innerText = "Uploading Image...";
+    saveBtn.disabled = true;
 
-                    const profileData = {
-                        name: document.getElementById('edit-name').value,
-                        location: document.getElementById('edit-location').value,
-                        favFood: document.getElementById('edit-fav-food').value,
-                        favRestaurant: document.getElementById('edit-fav-restaurant').value,
-                    };
-                    if (photoURL) profileData.photoURL = photoURL;
+    try {
+        if (file) {
+            const storageRef = ref(storage, `profile_pics/${auth.currentUser.uid}`);
+            await uploadBytes(storageRef, file);
+            photoURL = await getDownloadURL(storageRef);
+            saveBtn.innerText = "Saving Profile Data...";
+        }
 
-                    await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-                    toggleEdit(false);
-                } catch (e) {
-                    console.error(e);
-                    alert("Error saving profile. Check console.");
-                } finally {
-                    btn.innerText = "Save Changes";
-                    btn.disabled = false;
-                }
-            };
+        const profileData = {
+            name: document.getElementById('edit-name').value,
+            location: document.getElementById('edit-location').value,
+            favFood: document.getElementById('edit-fav-food').value,
+            favRestaurant: document.getElementById('edit-fav-restaurant').value,
+            updatedAt: new Date()
+        };
+
+        if (photoURL) profileData.photoURL = photoURL;
+
+        await setDoc(doc(db, "profiles", auth.currentUser.uid), profileData, { merge: true });
+        
+        alert("Chef Profile Updated!");
+        toggleEdit(false);
+    } catch (e) { 
+        console.error(e);
+        alert("Upload failed. Check your internet connection or Firebase Storage rules.");
+    } finally {
+        // 3. RESET: Put button back to normal
+        saveBtn.innerText = "Save Changes";
+        saveBtn.disabled = false;
+    }
+};
 
         } else {
             window.location.href = "index.html";
