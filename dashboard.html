@@ -200,19 +200,27 @@
         if (user) {
             // GREETING
             onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                const data = docSnap.data() || {};
-                const name = data.name || user.email.split('@')[0];
-                document.querySelector('.welcome-msg h1').innerText = `Hello, ${name}`;
-                
-                // POPULATE PROFILE FIELDS
-                document.getElementById('display-name').innerText = data.name || "Chef";
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-favorites').innerText = data.favorites || "Not set";
-                
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-favorites').value = data.favorites || "";
-            });
+    const data = docSnap.data() || {};
+    const chefName = data.name || "Chef";
+    
+    // Update Header
+    document.querySelector('.welcome-msg h1').innerText = `Hello, ${chefName}`;
+    
+    // Update Initials in Placeholder
+    document.getElementById('profile-initials').innerText = chefName.charAt(0).toUpperCase();
+
+    // Update Display Fields
+    document.getElementById('display-name').innerText = chefName;
+    document.getElementById('display-location').innerText = data.location || "Not set";
+    document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+    document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
+    
+    // Fill Edit Inputs
+    document.getElementById('edit-name').value = data.name || "";
+    document.getElementById('edit-location').value = data.location || "";
+    document.getElementById('edit-fav-food').value = data.favFood || "";
+    document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+});
 
             // TOGGLE EDIT
             window.toggleEdit = (isEditing) => {
@@ -222,18 +230,19 @@
 
             // SAVE PROFILE
             document.getElementById('save-profile-btn').onclick = async () => {
-                const profileData = {
-                    name: document.getElementById('edit-name').value,
-                    location: document.getElementById('edit-location').value,
-                    favorites: document.getElementById('edit-favorites').value,
-                    updatedAt: new Date()
-                };
-                try {
-                    await setDoc(doc(db, "profiles", user.uid), profileData);
-                    alert("Profile updated!");
-                    toggleEdit(false);
-                } catch (e) { alert("Error saving profile."); }
-            };
+    const profileData = {
+        name: document.getElementById('edit-name').value,
+        location: document.getElementById('edit-location').value,
+        favFood: document.getElementById('edit-fav-food').value,
+        favRestaurant: document.getElementById('edit-fav-restaurant').value,
+        updatedAt: new Date()
+    };
+    try {
+        await setDoc(doc(db, "profiles", user.uid), profileData);
+        alert("Chef Profile Updated!");
+        toggleEdit(false);
+    } catch (e) { console.error(e); }
+};
 
         } else {
             window.location.href = "index.html";
