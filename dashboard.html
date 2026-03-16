@@ -20,6 +20,38 @@
         .btn-action { margin-top: 15px; padding: 10px 20px; background-color: var(--primary-green); color: white; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
         input { box-sizing: border-box; width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd; }
         @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } }
+    
+    
+    #toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: var(--primary-green);
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 2000;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+#toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    
+    
+    
+    
+    
+    
+    
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -214,7 +246,9 @@
                     await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
                     
                     toggleEdit(false);
-                    alert("Chef Profile Updated!");
+                    const toast = document.getElementById("toast");
+                        toast.className = "show";
+                        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
                 } catch (e) {
                     console.error(e);
                     alert("Save failed. Check console for details.");
@@ -246,5 +280,7 @@
 
     document.getElementById('logout-btn').onclick = () => signOut(auth);
 </script>
+<div id="toast">Profile Updated! 🍳</div>
+
 </body>
 </html>
