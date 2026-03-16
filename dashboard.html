@@ -223,19 +223,23 @@
             };
         }
 
-        // LOAD PROFILE
-        onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('display-name').innerText = data.name || "Chef";
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-favorites').innerText = data.favorites || "Not set";
-                
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-favorites').value = data.favorites || "";
-            }
-        });
+// LOAD PROFILE
+onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        
+        // --- THIS IS THE NEW LINE ---
+        // It finds the greeting in the header and updates it with the name from the database
+        document.querySelector('.welcome-msg h1').innerText = `Hello, ${data.name || "Chef"}`;
+
+        // Your existing code to fill the card
+        document.getElementById('display-name').innerText = data.name || "Chef";
+        document.getElementById('display-location').innerText = data.location || "Not set";
+        document.getElementById('display-favorites').innerText = data.favorites || "Not set";
+        
+        // ... rest of your pre-fill code ...
+    }
+});
 
     } else {
         window.location.href = "index.html";
