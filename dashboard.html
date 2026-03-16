@@ -213,54 +213,64 @@
 
             // 3. CONSOLIDATED SAVE LOGIC
             document.getElementById('save-profile-btn').onclick = async () => {
-                const saveBtn = document.getElementById('save-profile-btn');
-                saveBtn.innerText = "Processing...";
-                saveBtn.disabled = true;
+    const saveBtn = document.getElementById('save-profile-btn');
+    saveBtn.innerText = "Processing...";
+    saveBtn.disabled = true;
 
-                try {
-                    let photoURL = null;
+    try {
+        let photoURL = null;
 
-                    // If a cropper exists, we use the cropped blob
-                    if (cropper) {
-                        saveBtn.innerText = "Uploading Image...";
-                        const blob = await new Promise(resolve => {
-                            cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(resolve, 'image/jpeg', 0.6);
-                        });
+        // Check if there's an active cropper instance
+        if (cropper) {
+            saveBtn.innerText = "Shrinking & Uploading...";
+            
+            // We lower the dimensions to 200x200—perfect for a small profile circle
+            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+            
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob((b) => {
+                    if (b) resolve(b); else reject("Canvas is empty");
+                }, 'image/jpeg', 0.6);
+            });
 
-                        const storageRef = ref(storage, `profile_pics/${user.uid}`);
-                        await uploadBytes(storageRef, blob);
-                        photoURL = await getDownloadURL(storageRef);
-                    }
+            const storageRef = ref(storage, `profile_pics/${user.uid}`);
+            await uploadBytes(storageRef, blob);
+            photoURL = await getDownloadURL(storageRef);
+        }
 
-                    saveBtn.innerText = "Saving Profile...";
-                    const profileData = {
-                        name: document.getElementById('edit-name').value,
-                        location: document.getElementById('edit-location').value,
-                        favFood: document.getElementById('edit-fav-food').value,
-                        favRestaurant: document.getElementById('edit-fav-restaurant').value,
-                        updatedAt: new Date()
-                    };
+        saveBtn.innerText = "Updating Database...";
+        const profileData = {
+            name: document.getElementById('edit-name').value,
+            location: document.getElementById('edit-location').value,
+            favFood: document.getElementById('edit-fav-food').value,
+            favRestaurant: document.getElementById('edit-fav-restaurant').value,
+            updatedAt: new Date()
+        };
 
-                    if (photoURL) profileData.photoURL = photoURL;
+        if (photoURL) profileData.photoURL = photoURL;
 
-                    await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-                    
-                    toggleEdit(false);
-                    const toast = document.getElementById("toast");
-                        toast.className = "show";
-                        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-                } catch (e) {
-                    console.error(e);
-                    alert("Save failed. Check console for details.");
-                } finally {
-                    saveBtn.innerText = "Save Changes";
-                    saveBtn.disabled = false;
-                    if(cropper) {
-                        cropper.destroy();
-                        cropper = null;
-                    }
-                }
-            };
+        await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
+        
+        // SUCCESS: Clean up
+        toggleEdit(false);
+        const toast = document.getElementById("toast");
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+
+    } catch (e) {
+        console.error("FULL ERROR REPORT:", e);
+        alert("Error: " + e.message);
+    } finally {
+        saveBtn.innerText = "Save Changes";
+        saveBtn.disabled = false;
+        // Kill the cropper so it's fresh for next time
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+};
+
 
         } else {
             window.location.href = "index.html";
