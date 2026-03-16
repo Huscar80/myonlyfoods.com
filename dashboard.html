@@ -11,7 +11,7 @@
             --dark-green: #1e3d24;
             --white: #ffffff;
             --text-dark: #333;
-            --accent-gold: #c5a059; /* A touch of gold for premium feel */
+            --accent-gold: #c5a059;
         }
 
         body {
@@ -23,7 +23,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Navigation */
         .sidebar {
             width: 250px;
             background-color: var(--primary-green);
@@ -32,13 +31,13 @@
             flex-direction: column;
             padding: 30px 20px;
             box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
         }
 
-        .sidebar h2 {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            letter-spacing: 1px;
-        }
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 40px; letter-spacing: 1px; }
 
         .nav-item {
             color: rgba(255,255,255,0.8);
@@ -46,31 +45,16 @@
             padding: 12px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             transition: 0.3s;
+            cursor: pointer;
         }
 
         .nav-item:hover { color: white; padding-left: 5px; }
 
-        /* Main Content Area */
-        .main-content {
-            flex-grow: 1;
-            padding: 40px;
-        }
+        .main-content { flex-grow: 1; padding: 40px; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
 
         .welcome-msg h1 { margin: 0; color: var(--primary-green); }
-
-        /* Grid Layout for Features */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-        }
 
         .stat-card {
             background: var(--white);
@@ -78,10 +62,8 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
             border-left: 5px solid var(--accent-gold);
+            max-width: 800px;
         }
-
-        .stat-card h3 { margin-top: 0; color: var(--text-dark); }
-        .stat-card p { color: #666; font-size: 0.9rem; line-height: 1.5; }
 
         .btn-action {
             display: inline-block;
@@ -93,12 +75,13 @@
             border-radius: 5px;
             font-size: 0.8rem;
             font-weight: bold;
+            border: none;
+            cursor: pointer;
         }
 
-        /* Responsive for Mobile */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            .sidebar { width: 100%; box-sizing: border-box; }
+            .sidebar { width: 100%; height: auto; position: relative; }
         }
     </style>
 </head>
@@ -106,11 +89,11 @@
 
     <div class="sidebar">
         <h2>MYONLYFOODS</h2>
-        <a href="#" class="nav-item">My Pantry</a>
-        <a href="#" class="nav-item">Recipe Book</a>
-        <a href="#" class="nav-item">Sourcing Map</a>
-        <a href="#" class="nav-item">Account Settings</a>
-        <a href="#" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
+        <a class="nav-item" id="nav-pantry">My Pantry</a>
+        <a class="nav-item" id="nav-cookbook">Cookbook</a>
+        <a class="nav-item" id="nav-leftovers">Leftovers</a>
+        <a class="nav-item" id="nav-about">About Me</a>
+        <a class="nav-item" id="logout-btn" style="margin-top: auto; color: #ffbaba;">Logout</a>
     </div>
 
     <div class="main-content">
@@ -121,91 +104,106 @@
             </div>
         </div>
 
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3>Curated Recipes</h3>
-                <p>Explore recipes tailored to your unique dietary profile and flavor preferences.</p>
-                <a href="#" class="btn-action">Explore Now</a>
+        <div id="dynamic-content">
+            <div id="section-about" class="content-section">
+                <div class="stat-card">
+                    <div id="profile-view">
+                        <h3>About the Chef</h3>
+                        <h2 id="display-name">Chef Name</h2>
+                        <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
+                        <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
+                        <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
+                    </div>
+
+                    <div id="profile-edit" style="display: none;">
+                        <h3>Update Profile</h3>
+                        <div style="margin-bottom: 10px;">
+                            <label>Name:</label>
+                            <input type="text" id="edit-name" style="width:100%; padding:8px; box-sizing: border-box;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label>Location:</label>
+                            <input type="text" id="edit-location" style="width:100%; padding:8px; box-sizing: border-box;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label>Favorites:</label>
+                            <textarea id="edit-favorites" style="width:100%; padding:8px; height: 80px; box-sizing: border-box;"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="save-profile-btn" class="btn-action">Save Changes</button>
+                            <button onclick="toggleEdit(false)" class="btn-action" style="background:#888;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <h3>Ingredient Sourcing</h3>
-                <p>Track the origin of your ingredients from farm to table with total transparency.</p>
-                <a href="#" class="btn-action">View Sources</a>
+            <div id="section-pantry" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>My Pantry</h3>
+                    <p>The ingredients I love and the gear I can't live without.</p>
+                </div>
             </div>
 
-<div class="stat-card" id="profile-section">
-    <div id="profile-view">
-        <h3 id="display-name">Chef Name</h3>
-        <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
-        <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
-        <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
-    </div>
+            <div id="section-cookbook" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>My Cookbook</h3>
+                    <p>Post and build your recipes here.</p>
+                </div>
+            </div>
 
-    <div id="profile-edit" style="display: none;">
-        <h3>Update Profile</h3>
-        <div style="margin-bottom: 10px;">
-            <label>Name:</label>
-            <input type="text" id="edit-name" style="width:100%; padding:8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label>Location:</label>
-            <input type="text" id="edit-location" style="width:100%; padding:8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label>Favorites:</label>
-            <textarea id="edit-favorites" style="width:100%; padding:8px; height: 80px;"></textarea>
-        </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button id="save-profile-btn" class="btn-action">Save Changes</button>
-            <button onclick="toggleEdit(false)" class="btn-action" style="background:#888;">Cancel</button>
-        </div>
-    </div>
-</div>
+            <div id="section-leftovers" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>Leftovers</h3>
+                    <p>Cornerstone memories and food stories.</p>
+                </div>
+            </div>
         </div>
     </div>
 
 <script type="module">
-  // 1. Added the missing Firestore imports here
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-    authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-    projectId: "myonlyfoods-e9ee8",
-    storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-    messagingSenderId: "790098672248",
-    appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+        authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+        projectId: "myonlyfoods-e9ee8",
+        storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+        messagingSenderId: "790098672248",
+        appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app); // 2. Initialized the database variable
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("Logged in as:", user.email);
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // GREETING
+            onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+                const data = docSnap.data() || {};
+                const name = data.name || user.email.split('@')[0];
+                document.querySelector('.welcome-msg h1').innerText = `Hello, ${name}`;
+                
+                // POPULATE PROFILE FIELDS
+                document.getElementById('display-name').innerText = data.name || "Chef";
+                document.getElementById('display-location').innerText = data.location || "Not set";
+                document.getElementById('display-favorites').innerText = data.favorites || "Not set";
+                
+                document.getElementById('edit-name').value = data.name || "";
+                document.getElementById('edit-location').value = data.location || "";
+                document.getElementById('edit-favorites').value = data.favorites || "";
+            });
 
-        // Update the greeting (I added an ID check for you)
-        const greetingElement = document.querySelector('.welcome-msg h1');
-        if (greetingElement) {
-            const name = user.displayName || user.email.split('@')[0];
-            greetingElement.innerText = `Hello, ${name}`;
-        }
+            // TOGGLE EDIT
+            window.toggleEdit = (isEditing) => {
+                document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+                document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+            };
 
-        // Toggle Function
-        window.toggleEdit = (isEditing) => {
-            document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
-            document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
-        };
-
-        // SAVE PROFILE
-        const saveBtn = document.getElementById('save-profile-btn');
-        if (saveBtn) {
-            saveBtn.onclick = async () => {
+            // SAVE PROFILE
+            document.getElementById('save-profile-btn').onclick = async () => {
                 const profileData = {
                     name: document.getElementById('edit-name').value,
                     location: document.getElementById('edit-location').value,
@@ -216,46 +214,27 @@
                     await setDoc(doc(db, "profiles", user.uid), profileData);
                     alert("Profile updated!");
                     toggleEdit(false);
-                } catch (e) { 
-                    console.error("Error saving profile:", e);
-                    alert("Error saving. Check Firebase console rules.");
-                }
+                } catch (e) { alert("Error saving profile."); }
             };
+
+        } else {
+            window.location.href = "index.html";
         }
+    });
 
-// LOAD PROFILE
-onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        
-        // --- THIS IS THE NEW LINE ---
-        // It finds the greeting in the header and updates it with the name from the database
-        document.querySelector('.welcome-msg h1').innerText = `Hello, ${data.name || "Chef"}`;
+    // NAVIGATION LOGIC
+    window.showSection = (sectionId) => {
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(`section-${sectionId}`).style.display = 'block';
+    };
 
-        // Your existing code to fill the card
-        document.getElementById('display-name').innerText = data.name || "Chef";
-        document.getElementById('display-location').innerText = data.location || "Not set";
-        document.getElementById('display-favorites').innerText = data.favorites || "Not set";
-        
-        // ... rest of your pre-fill code ...
-    }
-});
+    document.getElementById('nav-pantry').onclick = () => showSection('pantry');
+    document.getElementById('nav-cookbook').onclick = () => showSection('cookbook');
+    document.getElementById('nav-leftovers').onclick = () => showSection('leftovers');
+    document.getElementById('nav-about').onclick = () => showSection('about');
 
-    } else {
-        window.location.href = "index.html";
-    }
-  });
-
-  // Logout Handler (Fixed the ID to match your Logout link style)
-  document.querySelectorAll('.nav-item').forEach(item => {
-      if(item.innerText === 'Logout') {
-          item.onclick = (e) => {
-              e.preventDefault();
-              signOut(auth);
-          };
-      }
-  });
+    // LOGOUT
+    document.getElementById('logout-btn').onclick = () => signOut(auth);
 </script>
-
 </body>
 </html>
