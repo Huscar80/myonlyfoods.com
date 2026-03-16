@@ -21,6 +21,8 @@
         input { box-sizing: border-box; width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd; }
         @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body>
 
@@ -87,6 +89,17 @@
         </div>
     </div>
 
+<div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
+    <div style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
+        <h3>Crop Profile Picture</h3>
+        <div style="max-height:400px; margin-bottom:20px;">
+            <img id="cropper-image" style="max-width:100%;">
+        </div>
+        <button id="crop-done-btn" class="btn-action">Done</button>
+        <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action" style="background:#888;">Cancel</button>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -107,99 +120,120 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
+    let cropper; // Keep cropper in the outer scope
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            console.log("Logged in as:", user.uid);
-            
-            // This pulls the data specific to THIS user's UID
+            // 1. DATA LISTENER
             onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // Update Text
-                    document.getElementById('header-greeting').innerText = `Hello, ${data.name || 'Chef'}`;
-                    document.getElementById('display-name').innerText = data.name || "Chef Name";
-                    document.getElementById('display-location').innerText = data.location || "Not set";
-                    document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
-                    document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
+                const data = docSnap.data() || {};
+                const chefName = data.name || "Chef";
+                
+                document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
+                document.getElementById('display-name').innerText = chefName;
+                document.getElementById('display-location').innerText = data.location || "Not set";
+                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
 
-                    // Update Image/Initials
-                    const avatar = document.getElementById('avatar-container');
-                    if (data.photoURL) {
-                        avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
-                    } else {
-                        const initial = (data.name || "C").charAt(0).toUpperCase();
-                        avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
-                    }
-
-                    // Pre-fill edit fields
-                    document.getElementById('edit-name').value = data.name || "";
-                    document.getElementById('edit-location').value = data.location || "";
-                    document.getElementById('edit-fav-food').value = data.favFood || "";
-                    document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+                const avatar = document.getElementById('avatar-container');
+                if (data.photoURL) {
+                    avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
                 } else {
-                    // If no document exists yet
-                    document.getElementById('display-name').innerText = "New Chef";
-                    document.getElementById('display-location').innerText = "Not set";
-                    document.getElementById('display-fav-food').innerText = "Not set";
-                    document.getElementById('display-fav-restaurant').innerText = "Not set";
+                    const initial = chefName.charAt(0).toUpperCase();
+                    avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
                 }
+
+                document.getElementById('edit-name').value = data.name || "";
+                document.getElementById('edit-location').value = data.location || "";
+                document.getElementById('edit-fav-food').value = data.favFood || "";
+                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
             });
 
-            // SAVE BUTTON
-document.getElementById('save-profile-btn').onclick = async () => {
-    const saveBtn = document.getElementById('save-profile-btn');
-    const file = document.getElementById('profile-upload').files[0];
-    let photoURL = null;
+            // 2. CROPPER LOGIC
+            const fileInput = document.getElementById('profile-upload');
+            const cropperModal = document.getElementById('cropper-modal');
+            const cropperImg = document.getElementById('cropper-image');
 
-    // 1. LIMITATION: Check file size (2MB = 2 * 1024 * 1024 bytes)
-    if (file && file.size > 2097152) {
-        alert("File is too large! Please choose an image under 2MB.");
-        return; // Stops the function here
-    }
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5242880) { // 5MB limit for raw selection
+                        alert("File is too large! Try a smaller image.");
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        cropperImg.src = event.target.result;
+                        cropperModal.style.display = 'flex';
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(cropperImg, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
 
-    // 2. VISUAL FEEDBACK: Disable button and show status
-    saveBtn.innerText = "Uploading Image...";
-    saveBtn.disabled = true;
+            document.getElementById('crop-done-btn').onclick = () => {
+                cropperModal.style.display = 'none';
+            };
 
-    try {
-        if (file) {
-            const storageRef = ref(storage, `profile_pics/${auth.currentUser.uid}`);
-            await uploadBytes(storageRef, file);
-            photoURL = await getDownloadURL(storageRef);
-            saveBtn.innerText = "Saving Profile Data...";
-        }
+            // 3. CONSOLIDATED SAVE LOGIC
+            document.getElementById('save-profile-btn').onclick = async () => {
+                const saveBtn = document.getElementById('save-profile-btn');
+                saveBtn.innerText = "Processing...";
+                saveBtn.disabled = true;
 
-        const profileData = {
-            name: document.getElementById('edit-name').value,
-            location: document.getElementById('edit-location').value,
-            favFood: document.getElementById('edit-fav-food').value,
-            favRestaurant: document.getElementById('edit-fav-restaurant').value,
-            updatedAt: new Date()
-        };
+                try {
+                    let photoURL = null;
 
-        if (photoURL) profileData.photoURL = photoURL;
+                    // If a cropper exists, we use the cropped blob
+                    if (cropper) {
+                        saveBtn.innerText = "Uploading Image...";
+                        const blob = await new Promise(resolve => {
+                            cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(resolve, 'image/jpeg', 0.8);
+                        });
 
-        await setDoc(doc(db, "profiles", auth.currentUser.uid), profileData, { merge: true });
-        
-        alert("Chef Profile Updated!");
-        toggleEdit(false);
-    } catch (e) { 
-        console.error(e);
-        alert("Upload failed. Check your internet connection or Firebase Storage rules.");
-    } finally {
-        // 3. RESET: Put button back to normal
-        saveBtn.innerText = "Save Changes";
-        saveBtn.disabled = false;
-    }
-};
+                        const storageRef = ref(storage, `profile_pics/${user.uid}`);
+                        await uploadBytes(storageRef, blob);
+                        photoURL = await getDownloadURL(storageRef);
+                    }
+
+                    saveBtn.innerText = "Saving Profile...";
+                    const profileData = {
+                        name: document.getElementById('edit-name').value,
+                        location: document.getElementById('edit-location').value,
+                        favFood: document.getElementById('edit-fav-food').value,
+                        favRestaurant: document.getElementById('edit-fav-restaurant').value,
+                        updatedAt: new Date()
+                    };
+
+                    if (photoURL) profileData.photoURL = photoURL;
+
+                    await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
+                    
+                    toggleEdit(false);
+                    alert("Chef Profile Updated!");
+                } catch (e) {
+                    console.error(e);
+                    alert("Save failed. Check console for details.");
+                } finally {
+                    saveBtn.innerText = "Save Changes";
+                    saveBtn.disabled = false;
+                    if(cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                }
+            };
 
         } else {
             window.location.href = "index.html";
         }
     });
 
-    // Helper functions
+    // Helper functions exposed to the window
     window.toggleEdit = (isEditing) => {
         document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
         document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
