@@ -224,7 +224,7 @@
                     if (cropper) {
                         saveBtn.innerText = "Uploading Image...";
                         const blob = await new Promise(resolve => {
-                            cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(resolve, 'image/jpeg', 0.8);
+                            cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(resolve, 'image/jpeg', 0.6);
                         });
 
                         const storageRef = ref(storage, `profile_pics/${user.uid}`);
