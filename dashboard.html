@@ -1,61 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | myonlyfoods</title>
     <style>
         :root {
-            --logo-cream: #f8f6f1; 
+            --logo-cream: #f8f6f1;
             --primary-green: #2e5a35;
             --white: #ffffff;
             --accent-gold: #c5a059;
         }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--logo-cream); display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background-color: var(--primary-green); color: white; display: flex; flex-direction: column; padding: 30px 20px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
-        .nav-item { color: rgba(255,255,255,0.8); text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
-        .main-content { flex-grow: 1; padding: 40px; }
-        .welcome-msg h1 { margin: 0; color: var(--primary-green); }
-        .stat-card { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border-left: 5px solid var(--accent-gold); max-width: 800px; }
-        .btn-action { margin-top: 15px; padding: 10px 20px; background-color: var(--primary-green); color: white; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
-        input { box-sizing: border-box; width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd; }
-        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } }
-    
-    
-    #toast {
-    visibility: hidden;
-    min-width: 250px;
-    background-color: var(--primary-green);
-    color: white;
-    text-align: center;
-    border-radius: 8px;
-    padding: 16px;
-    position: fixed;
-    z-index: 2000;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
 
-#toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--logo-cream);
+            display: flex;
+            min-height: 100vh;
+        }
 
-@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-    
-    
-    
-    
-    
-    
-    
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-green);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .nav-item {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+        }
+
+        .welcome-msg h1 {
+            margin: 0;
+            color: var(--primary-green);
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            border-left: 5px solid var(--accent-gold);
+            max-width: 800px;
+        }
+
+        .btn-action {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--primary-green);
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+        }
+
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--primary-green);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
+
 <body>
 
     <div class="sidebar">
@@ -79,19 +166,23 @@
             <div id="section-about" class="content-section">
                 <div class="stat-card">
                     <div id="profile-view" style="text-align: center;">
-                        <div id="avatar-container" style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
+                        <div id="avatar-container"
+                            style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
                             <span id="profile-initials" style="font-size: 3rem; color: #999;">?</span>
                         </div>
 
                         <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Loading...</h2>
                         <p><strong>📍 Location:</strong> <span id="display-location">Loading...</span></p>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
-                            <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
+                            <div
+                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE FOOD</p>
                                 <span id="display-fav-food">Loading...</span>
                             </div>
-                            <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                            <div
+                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE RESTAURANT</p>
                                 <span id="display-fav-restaurant">Loading...</span>
                             </div>
@@ -106,190 +197,207 @@
                         <label>Favorite Food:</label><input type="text" id="edit-fav-food">
                         <label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant">
                         <label>Profile Picture:</label><input type="file" id="profile-upload" accept="image/*">
-                        
+
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
                             <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
-                            <button onclick="toggleEdit(false)" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
+                            <button onclick="toggleEdit(false)" class="btn-action"
+                                style="flex: 1; background:#888;">Cancel</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="section-pantry" class="content-section" style="display:none;"><div class="stat-card"><h3>My Pantry</h3></div></div>
-            <div id="section-cookbook" class="content-section" style="display:none;"><div class="stat-card"><h3>My Cookbook</h3></div></div>
-            <div id="section-leftovers" class="content-section" style="display:none;"><div class="stat-card"><h3>Leftovers</h3></div></div>
+            <div id="section-pantry" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>My Pantry</h3>
+                </div>
+            </div>
+            <div id="section-cookbook" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>My Cookbook</h3>
+                </div>
+            </div>
+            <div id="section-leftovers" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>Leftovers</h3>
+                </div>
+            </div>
         </div>
     </div>
 
-<div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
-    <div style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
-        <h3>Crop Profile Picture</h3>
-        <div style="max-height:400px; margin-bottom:20px;">
-            <img id="cropper-image" style="max-width:100%;">
+    <div id="cropper-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
+        <div
+            style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
+            <h3>Crop Profile Picture</h3>
+            <div style="max-height:400px; margin-bottom:20px;">
+                <img id="cropper-image" style="max-width:100%;">
+            </div>
+            <button id="crop-done-btn" class="btn-action">Done</button>
+            <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action"
+                style="background:#888;">Cancel</button>
         </div>
-        <button id="crop-done-btn" class="btn-action">Done</button>
-        <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action" style="background:#888;">Cancel</button>
     </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-        authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-        projectId: "myonlyfoods-e9ee8",
-        storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-        messagingSenderId: "790098672248",
-        appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    let cropper; // Keep cropper in the outer scope
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // 1. DATA LISTENER
-            onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                const data = docSnap.data() || {};
-                const chefName = data.name || "Chef";
-                
-                document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
-                document.getElementById('display-name').innerText = chefName;
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
-                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
-
-                const avatar = document.getElementById('avatar-container');
-                if (data.photoURL) {
-                    avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
-                } else {
-                    const initial = chefName.charAt(0).toUpperCase();
-                    avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
-                }
-
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-fav-food').value = data.favFood || "";
-                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
-            });
-
-            // 2. CROPPER LOGIC
-            const fileInput = document.getElementById('profile-upload');
-            const cropperModal = document.getElementById('cropper-modal');
-            const cropperImg = document.getElementById('cropper-image');
-
-            fileInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5242880) { // 5MB limit for raw selection
-                        alert("File is too large! Try a smaller image.");
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        cropperImg.src = event.target.result;
-                        cropperModal.style.display = 'flex';
-                        if (cropper) cropper.destroy();
-                        cropper = new Cropper(cropperImg, {
-                            aspectRatio: 1,
-                            viewMode: 1,
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            document.getElementById('crop-done-btn').onclick = () => {
-                cropperModal.style.display = 'none';
-            };
-
-            // 3. CONSOLIDATED SAVE LOGIC
-            document.getElementById('save-profile-btn').onclick = async () => {
-    const saveBtn = document.getElementById('save-profile-btn');
-    saveBtn.innerText = "Processing...";
-    saveBtn.disabled = true;
-
-    try {
-        let photoURL = null;
-
-        // Check if there's an active cropper instance
-        if (cropper) {
-            saveBtn.innerText = "Shrinking & Uploading...";
-            
-            // We lower the dimensions to 200x200—perfect for a small profile circle
-            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-            
-            const blob = await new Promise((resolve, reject) => {
-                canvas.toBlob((b) => {
-                    if (b) resolve(b); else reject("Canvas is empty");
-                }, 'image/jpeg', 0.6);
-            });
-
-            const storageRef = ref(storage, `profile_pics/${user.uid}`);
-            await uploadBytes(storageRef, blob);
-            photoURL = await getDownloadURL(storageRef);
-        }
-
-        saveBtn.innerText = "Updating Database...";
-        const profileData = {
-            name: document.getElementById('edit-name').value,
-            location: document.getElementById('edit-location').value,
-            favFood: document.getElementById('edit-fav-food').value,
-            favRestaurant: document.getElementById('edit-fav-restaurant').value,
-            updatedAt: new Date()
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+            authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+            projectId: "myonlyfoods-e9ee8",
+            storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+            messagingSenderId: "790098672248",
+            appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
         };
 
-        if (photoURL) profileData.photoURL = photoURL;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-        
-        // SUCCESS: Clean up
-        toggleEdit(false);
-        const toast = document.getElementById("toast");
-        toast.className = "show";
-        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        let cropper; // Keep cropper in the outer scope
 
-    } catch (e) {
-        console.error("FULL ERROR REPORT:", e);
-        alert("Error: " + e.message);
-    } finally {
-        saveBtn.innerText = "Save Changes";
-        saveBtn.disabled = false;
-        // Kill the cropper so it's fresh for next time
-        if (cropper) cropper.destroy();
-          cropper = new Cropper(cropperImg, { ... });
-        }
-    }
-};
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 1. DATA LISTENER
+                onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+                    const data = docSnap.data() || {};
+                    const chefName = data.name || "Chef";
 
+                    document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
+                    document.getElementById('display-name').innerText = chefName;
+                    document.getElementById('display-location').innerText = data.location || "Not set";
+                    document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+                    document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
 
-        } else {
-            window.location.href = "index.html";
-        }
-    });
+                    const avatar = document.getElementById('avatar-container');
+                    if (data.photoURL) {
+                        avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
+                    } else {
+                        const initial = chefName.charAt(0).toUpperCase();
+                        avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
+                    }
 
-    // Helper functions exposed to the window
-    window.toggleEdit = (isEditing) => {
-        document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
-        document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
-    };
+                    document.getElementById('edit-name').value = data.name || "";
+                    document.getElementById('edit-location').value = data.location || "";
+                    document.getElementById('edit-fav-food').value = data.favFood || "";
+                    document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+                });
 
-    window.showSection = (sectionId) => {
-        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-        document.getElementById(`section-${sectionId}`).style.display = 'block';
-    };
+                // 2. CROPPER LOGIC
+                const fileInput = document.getElementById('profile-upload');
+                const cropperModal = document.getElementById('cropper-modal');
+                const cropperImg = document.getElementById('cropper-image');
 
-    document.getElementById('logout-btn').onclick = () => signOut(auth);
-</script>
-<div id="toast">Profile Updated! 🍳</div>
+                fileInput.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 5242880) { // 5MB limit for raw selection
+                            alert("File is too large! Try a smaller image.");
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            cropperImg.src = event.target.result;
+                            cropperModal.style.display = 'flex';
+                            if (cropper) cropper.destroy();
+                            cropper = new Cropper(cropperImg, {
+                                aspectRatio: 1,
+                                viewMode: 1,
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+
+                document.getElementById('crop-done-btn').onclick = () => {
+                    cropperModal.style.display = 'none';
+                };
+
+                // 3. CONSOLIDATED SAVE LOGIC
+                document.getElementById('save-profile-btn').onclick = async () => {
+                    const saveBtn = document.getElementById('save-profile-btn');
+                    saveBtn.innerText = "Processing...";
+                    saveBtn.disabled = true;
+
+                    try {
+                        let photoURL = null;
+
+                        // Check if there's an active cropper instance
+                        if (cropper) {
+                            saveBtn.innerText = "Shrinking & Uploading...";
+
+                            // We lower the dimensions to 200x200—perfect for a small profile circle
+                            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+
+                            const blob = await new Promise((resolve, reject) => {
+                                canvas.toBlob((b) => {
+                                    if (b) resolve(b); else reject("Canvas is empty");
+                                }, 'image/jpeg', 0.6);
+                            });
+
+                            const storageRef = ref(storage, `profile_pics/${user.uid}`);
+                            await uploadBytes(storageRef, blob);
+                            photoURL = await getDownloadURL(storageRef);
+                        }
+
+                        saveBtn.innerText = "Updating Database...";
+                        const profileData = {
+                            name: document.getElementById('edit-name').value,
+                            location: document.getElementById('edit-location').value,
+                            favFood: document.getElementById('edit-fav-food').value,
+                            favRestaurant: document.getElementById('edit-fav-restaurant').value,
+                            updatedAt: new Date()
+                        };
+
+                        if (photoURL) profileData.photoURL = photoURL;
+
+                        await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
+
+                        // SUCCESS: Clean up
+                        toggleEdit(false);
+                        const toast = document.getElementById("toast");
+                        toast.className = "show";
+                        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+
+                    } catch (e) {
+                        console.error("FULL ERROR REPORT:", e);
+                        alert("Error: " + e.message);
+                    } finally {
+                        saveBtn.innerText = "Save Changes";
+                        saveBtn.disabled = false;
+                        if (cropper) {
+                            cropper.destroy();
+                            cropper = null;
+                        }
+                    }
+                }; // This closes the Save Button click handler
+
+            } else {
+                // This closes the "if (user)" block so the redirect works
+                window.location.href = "index.html";
+            }
+        }); // This closes the onAuthStateChanged listener
+
+        // Helper functions exposed to the window
+        window.toggleEdit = (isEditing) => {
+            document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+            document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+        };
+
+        window.showSection = (sectionId) => {
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.getElementById(`section-${sectionId}`).style.display = 'block';
+        };
+
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+    </script>
+    <div id="toast">Profile Updated! 🍳</div>
 
 </body>
+
 </html>
