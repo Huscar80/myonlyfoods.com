@@ -264,9 +264,8 @@
         saveBtn.innerText = "Save Changes";
         saveBtn.disabled = false;
         // Kill the cropper so it's fresh for next time
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
+        if (cropper) cropper.destroy();
+          cropper = new Cropper(cropperImg, { ... });
         }
     }
 };
