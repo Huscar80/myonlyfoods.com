@@ -110,7 +110,7 @@
         <a href="#" class="nav-item">Recipe Book</a>
         <a href="#" class="nav-item">Sourcing Map</a>
         <a href="#" class="nav-item">Account Settings</a>
-        <a href="index.html" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
+        <a href="#" class="nav-item" style="margin-top: auto; color: #ffbaba;">Logout</a>
     </div>
 
     <div class="main-content">
@@ -134,33 +134,44 @@
                 <a href="#" class="btn-action">View Sources</a>
             </div>
 
-            <div class="stat-card" id="profile-section">
-                <div id="profile-view">
-                <h3 id="display-name">Chef Name</h3>
-                <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
-                <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
-                <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
-            </div>
+<div class="stat-card" id="profile-section">
+    <div id="profile-view">
+        <h3 id="display-name">Chef Name</h3>
+        <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
+        <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
+        <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
+    </div>
 
-            <div id="profile-edit" style="display: none;">
-            <h3>Update Profile</h3>
-            <input type="text" id="edit-name" placeholder="Full Name" style="width:100%; margin-bottom:10px; padding:8px;">
-            <input type="text" id="edit-location" placeholder="City, State" style="width:100%; margin-bottom:10px; padding:8px;">
-            <textarea id="edit-favorites" placeholder="Favorite dinners, restaurants..." style="width:100%; margin-bottom:10px; padding:8px;"></textarea>
+    <div id="profile-edit" style="display: none;">
+        <h3>Update Profile</h3>
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label>
+            <input type="text" id="edit-name" style="width:100%; padding:8px;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Location:</label>
+            <input type="text" id="edit-location" style="width:100%; padding:8px;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Favorites:</label>
+            <textarea id="edit-favorites" style="width:100%; padding:8px; height: 80px;"></textarea>
+        </div>
         
         <div style="display: flex; gap: 10px;">
             <button id="save-profile-btn" class="btn-action">Save Changes</button>
             <button onclick="toggleEdit(false)" class="btn-action" style="background:#888;">Cancel</button>
         </div>
-
+    </div>
+</div>
         </div>
     </div>
 
 <script type="module">
+  // 1. Added the missing Firestore imports here
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // Your Firebase Configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
     authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
@@ -172,35 +183,74 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app); // 2. Initialized the database variable
 
-  // Monitor Auth State
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      console.log("Logged in as:", user.displayName || user.email);
-      
-      // Personalize the greeting
-      const greetingElement = document.getElementById('user-greeting');
-      if (greetingElement) {
-          // It will use the Full Name if available, otherwise the email prefix
-          const name = user.displayName || user.email.split('@')[0];
-          greetingElement.innerText = `Welcome back, ${name}!`;
-      }
+        console.log("Logged in as:", user.email);
+
+        // Update the greeting (I added an ID check for you)
+        const greetingElement = document.querySelector('.welcome-msg h1');
+        if (greetingElement) {
+            const name = user.displayName || user.email.split('@')[0];
+            greetingElement.innerText = `Hello, ${name}`;
+        }
+
+        // Toggle Function
+        window.toggleEdit = (isEditing) => {
+            document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+            document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+        };
+
+        // SAVE PROFILE
+        const saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const profileData = {
+                    name: document.getElementById('edit-name').value,
+                    location: document.getElementById('edit-location').value,
+                    favorites: document.getElementById('edit-favorites').value,
+                    updatedAt: new Date()
+                };
+                try {
+                    await setDoc(doc(db, "profiles", user.uid), profileData);
+                    alert("Profile updated!");
+                    toggleEdit(false);
+                } catch (e) { 
+                    console.error("Error saving profile:", e);
+                    alert("Error saving. Check Firebase console rules.");
+                }
+            };
+        }
+
+        // LOAD PROFILE
+        onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('display-name').innerText = data.name || "Chef";
+                document.getElementById('display-location').innerText = data.location || "Not set";
+                document.getElementById('display-favorites').innerText = data.favorites || "Not set";
+                
+                document.getElementById('edit-name').value = data.name || "";
+                document.getElementById('edit-location').value = data.location || "";
+                document.getElementById('edit-favorites').value = data.favorites || "";
+            }
+        });
+
     } else {
-      // Not logged in? Boot them out.
-      window.location.href = "index.html";
+        window.location.href = "index.html";
     }
   });
 
-  // Handle Logout (make sure your logout link has id="logoutBtn")
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
-    });
-  }
+  // Logout Handler (Fixed the ID to match your Logout link style)
+  document.querySelectorAll('.nav-item').forEach(item => {
+      if(item.innerText === 'Logout') {
+          item.onclick = (e) => {
+              e.preventDefault();
+              signOut(auth);
+          };
+      }
+  });
 </script>
 
 </body>
