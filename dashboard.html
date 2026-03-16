@@ -104,4 +104,87 @@
         appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
     };
 
-    const app = initializeApp(firebaseConfig
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+                const data = docSnap.data() || {};
+                const chefName = data.name || "Chef";
+                
+                document.querySelector('.welcome-msg h1').innerText = `Hello, ${chefName}`;
+                
+                // IMAGE DISPLAY LOGIC
+                const avatarContainer = document.getElementById('avatar-container');
+                if (data.photoURL) {
+                    avatarContainer.innerHTML = `<img src="${data.photoURL}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    avatarContainer.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999; font-weight: bold;">${chefName.charAt(0).toUpperCase()}</span>`;
+                }
+
+                document.getElementById('display-name').innerText = chefName;
+                document.getElementById('display-location').innerText = data.location || "Not set";
+                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
+                
+                document.getElementById('edit-name').value = data.name || "";
+                document.getElementById('edit-location').value = data.location || "";
+                document.getElementById('edit-fav-food').value = data.favFood || "";
+                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+            });
+
+            window.toggleEdit = (isEditing) => {
+                document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+                document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+            };
+
+            document.getElementById('save-profile-btn').onclick = async () => {
+                const file = document.getElementById('profile-upload').files[0];
+                let photoURL = null;
+
+                try {
+                    if (file) {
+                        const storageRef = ref(storage, `profile_pics/${user.uid}`);
+                        await uploadBytes(storageRef, file);
+                        photoURL = await getDownloadURL(storageRef);
+                    }
+
+                    const profileData = {
+                        name: document.getElementById('edit-name').value,
+                        location: document.getElementById('edit-location').value,
+                        favFood: document.getElementById('edit-fav-food').value,
+                        favRestaurant: document.getElementById('edit-fav-restaurant').value,
+                        updatedAt: new Date()
+                    };
+
+                    if (photoURL) profileData.photoURL = photoURL;
+
+                    await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
+                    alert("Chef Profile Updated!");
+                    toggleEdit(false);
+                } catch (e) { 
+                    console.error(e);
+                    alert("Error. Make sure Storage Rules are set to public in Firebase.");
+                }
+            };
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+
+    // Navigation
+    window.showSection = (sectionId) => {
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(`section-${sectionId}`).style.display = 'block';
+    };
+    document.getElementById('nav-pantry').onclick = () => showSection('pantry');
+    document.getElementById('nav-cookbook').onclick = () => showSection('cookbook');
+    document.getElementById('nav-leftovers').onclick = () => showSection('leftovers');
+    document.getElementById('nav-about').onclick = () => showSection('about');
+    document.getElementById('logout-btn').onclick = () => signOut(auth);
+</script>
+</body>
+</html>
