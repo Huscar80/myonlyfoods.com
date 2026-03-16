@@ -8,83 +8,20 @@
         :root {
             --logo-cream: #f8f6f1; 
             --primary-green: #2e5a35;
-            --dark-green: #1e3d24;
             --white: #ffffff;
             --text-dark: #333;
             --accent-gold: #c5a059;
         }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--logo-cream);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: var(--primary-green);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 30px 20px;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .sidebar h2 { font-size: 1.2rem; margin-bottom: 40px; letter-spacing: 1px; }
-
-        .nav-item {
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            transition: 0.3s;
-            cursor: pointer;
-        }
-
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--logo-cream); color: var(--text-dark); display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background-color: var(--primary-green); color: white; display: flex; flex-direction: column; padding: 30px 20px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
+        .nav-item { color: rgba(255,255,255,0.8); text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); transition: 0.3s; cursor: pointer; }
         .nav-item:hover { color: white; padding-left: 5px; }
-
         .main-content { flex-grow: 1; padding: 40px; }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-
         .welcome-msg h1 { margin: 0; color: var(--primary-green); }
-
-        .stat-card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            border-left: 5px solid var(--accent-gold);
-            max-width: 800px;
-        }
-
-        .btn-action {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: var(--primary-green);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-
-        input, textarea { box-sizing: border-box; } /* Ensures padding doesn't break layout */
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; position: relative; }
-        }
+        .stat-card { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border-left: 5px solid var(--accent-gold); max-width: 800px; }
+        .btn-action { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: var(--primary-green); color: white; border-radius: 5px; font-size: 0.8rem; font-weight: bold; border: none; cursor: pointer; }
+        input, textarea { box-sizing: border-box; width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } }
     </style>
 </head>
 <body>
@@ -102,7 +39,7 @@
         <div class="header">
             <div class="welcome-msg">
                 <h1>Hello, Chef</h1>
-                <p>Saturday, March 14, 2026</p>
+                <p>Monday, March 16, 2026</p>
             </div>
         </div>
 
@@ -110,45 +47,34 @@
             <div id="section-about" class="content-section">
                 <div class="stat-card">
                     <div id="profile-view" style="text-align: center;">
-                        <div style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
+                        <div id="avatar-container" style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
                             <span id="profile-initials" style="font-size: 3rem; color: #999; font-weight: bold;">?</span>
                         </div>
 
                         <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Chef Name</h2>
-                        <p style="margin: 5px 0;"><strong>📍 Location:</strong> <span id="display-location">Not set</span></p>
+                        <p><strong>📍 Location:</strong> <span id="display-location">Not set</span></p>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
                             <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
-                                <p style="margin: 0; font-size: 0.8rem; font-weight: bold; color: var(--primary-green);">FAVORITE FOOD</p>
+                                <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE FOOD</p>
                                 <span id="display-fav-food">Not set</span>
                             </div>
                             <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
-                                <p style="margin: 0; font-size: 0.8rem; font-weight: bold; color: var(--primary-green);">FAVORITE RESTAURANT</p>
+                                <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE RESTAURANT</p>
                                 <span id="display-fav-restaurant">Not set</span>
                             </div>
                         </div>
-
-                        <button onclick="toggleEdit(true)" class="btn-action" style="width: 100%; margin-top: 20px;">Edit Profile</button>
+                        <button onclick="toggleEdit(true)" class="btn-action" style="width:100%;">Edit Profile</button>
                     </div>
 
                     <div id="profile-edit" style="display: none;">
                         <h3>Update Your Chef Profile</h3>
-                        <div style="margin-bottom: 15px;">
-                            <label style="font-weight: bold; font-size: 0.9rem;">Name:</label>
-                            <input type="text" id="edit-name" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="font-weight: bold; font-size: 0.9rem;">Location:</label>
-                            <input type="text" id="edit-location" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="font-weight: bold; font-size: 0.9rem;">Favorite Food:</label>
-                            <input type="text" id="edit-fav-food" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="font-weight: bold; font-size: 0.9rem;">Favorite Restaurant:</label>
-                            <input type="text" id="edit-fav-restaurant" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
-                        </div>
+                        <div style="margin-bottom: 10px;"><label>Name:</label><input type="text" id="edit-name"></div>
+                        <div style="margin-bottom: 10px;"><label>Location:</label><input type="text" id="edit-location"></div>
+                        <div style="margin-bottom: 10px;"><label>Favorite Food:</label><input type="text" id="edit-fav-food"></div>
+                        <div style="margin-bottom: 10px;"><label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant"></div>
+                        <div style="margin-bottom: 15px;"><label>Change Profile Picture:</label><input type="file" id="profile-upload" accept="image/*"></div>
+                        
                         <div style="display: flex; gap: 10px;">
                             <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
                             <button onclick="toggleEdit(false)" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
@@ -156,27 +82,10 @@
                     </div>
                 </div>
             </div>
-
-            <div id="section-pantry" class="content-section" style="display:none;">
-                <div class="stat-card">
-                    <h3>My Pantry</h3>
-                    <p>The ingredients I love and the gear I can't live without.</p>
-                </div>
-            </div>
-
-            <div id="section-cookbook" class="content-section" style="display:none;">
-                <div class="stat-card">
-                    <h3>My Cookbook</h3>
-                    <p>Post and build your recipes here.</p>
-                </div>
-            </div>
-
-            <div id="section-leftovers" class="content-section" style="display:none;">
-                <div class="stat-card">
-                    <h3>Leftovers</h3>
-                    <p>Cornerstone memories and food stories.</p>
-                </div>
-            </div>
+            
+            <div id="section-pantry" class="content-section" style="display:none;"><div class="stat-card"><h3>My Pantry</h3></div></div>
+            <div id="section-cookbook" class="content-section" style="display:none;"><div class="stat-card"><h3>My Cookbook</h3></div></div>
+            <div id="section-leftovers" class="content-section" style="display:none;"><div class="stat-card"><h3>Leftovers</h3></div></div>
         </div>
     </div>
 
@@ -184,6 +93,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
@@ -194,70 +104,4 @@
         appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                const data = docSnap.data() || {};
-                const chefName = data.name || "Chef";
-                
-                document.querySelector('.welcome-msg h1').innerText = `Hello, ${chefName}`;
-                
-                // Set initials based on name
-                if (chefName) {
-                    document.getElementById('profile-initials').innerText = chefName.charAt(0).toUpperCase();
-                }
-
-                document.getElementById('display-name').innerText = chefName;
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
-                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
-                
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-fav-food').value = data.favFood || "";
-                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
-            });
-
-            window.toggleEdit = (isEditing) => {
-                document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
-                document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
-            };
-
-            document.getElementById('save-profile-btn').onclick = async () => {
-                const profileData = {
-                    name: document.getElementById('edit-name').value,
-                    location: document.getElementById('edit-location').value,
-                    favFood: document.getElementById('edit-fav-food').value,
-                    favRestaurant: document.getElementById('edit-fav-restaurant').value,
-                    updatedAt: new Date()
-                };
-                try {
-                    await setDoc(doc(db, "profiles", user.uid), profileData);
-                    alert("Chef Profile Updated!");
-                    toggleEdit(false);
-                } catch (e) { console.error(e); }
-            };
-
-        } else {
-            window.location.href = "index.html";
-        }
-    });
-
-    window.showSection = (sectionId) => {
-        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-        document.getElementById(`section-${sectionId}`).style.display = 'block';
-    };
-
-    document.getElementById('nav-pantry').onclick = () => showSection('pantry');
-    document.getElementById('nav-cookbook').onclick = () => showSection('cookbook');
-    document.getElementById('nav-leftovers').onclick = () => showSection('leftovers');
-    document.getElementById('nav-about').onclick = () => showSection('about');
-
-    document.getElementById('logout-btn').onclick = () => signOut(auth);
-</script>
-</body>
-</html>
+    const app = initializeApp(firebaseConfig
