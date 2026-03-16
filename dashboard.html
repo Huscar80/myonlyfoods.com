@@ -325,27 +325,7 @@
                     saveBtn.disabled = true;
 
                     try {
-                        let photoURL = null;
-
-                        // Check if there's an active cropper instance
-                        if (cropper) {
-                            saveBtn.innerText = "Shrinking & Uploading...";
-
-                            // We lower the dimensions to 200x200—perfect for a small profile circle
-                            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-
-                            const blob = await new Promise((resolve, reject) => {
-                                canvas.toBlob((b) => {
-                                    if (b) resolve(b); else reject("Canvas is empty");
-                                }, 'image/jpeg', 0.6);
-                            });
-
-                            const storageRef = ref(storage, `profile_pics/${user.uid}`);
-                            await uploadBytes(storageRef, blob);
-                            photoURL = await getDownloadURL(storageRef);
-                        }
-
-                        saveBtn.innerText = "Updating Database...";
+                        // 1. Start with the text data
                         const profileData = {
                             name: document.getElementById('edit-name').value,
                             location: document.getElementById('edit-location').value,
@@ -354,28 +334,41 @@
                             updatedAt: new Date()
                         };
 
-                        if (photoURL) profileData.photoURL = photoURL;
+                        // 2. Handle the Image
+                        if (cropper) {
+                            saveBtn.innerText = "Uploading Image...";
 
+                            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+                            const blob = await new Promise((resolve, reject) => {
+                                canvas.toBlob((b) => b ? resolve(b) : reject("Canvas empty"), 'image/jpeg', 0.8);
+                            });
+
+                            const storageRef = ref(storage, `profile_pics/${user.uid}`);
+                            await uploadBytes(storageRef, blob);
+
+                            // This is the missing link! We get the URL and add it to our object
+                            const downloadURL = await getDownloadURL(storageRef);
+                            profileData.photoURL = downloadURL;
+                        }
+
+                        // 3. Save EVERYTHING to Firestore in one go
+                        saveBtn.innerText = "Saving Profile...";
                         await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
 
-                        // SUCCESS: Clean up
                         toggleEdit(false);
                         const toast = document.getElementById("toast");
                         toast.className = "show";
-                        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+                        setTimeout(() => { toast.className = ""; }, 3000);
 
                     } catch (e) {
-                        console.error("FULL ERROR REPORT:", e);
-                        alert("Error: " + e.message);
+                        console.error("Save Error:", e);
+                        alert("Upload failed: " + e.message);
                     } finally {
                         saveBtn.innerText = "Save Changes";
                         saveBtn.disabled = false;
-                        if (cropper) {
-                            cropper.destroy();
-                            cropper = null;
-                        }
+                        if (cropper) { cropper.destroy(); cropper = null; }
                     }
-                }; // This closes the Save Button click handler
+                };
 
             } else {
                 // This closes the "if (user)" block so the redirect works
