@@ -104,38 +104,56 @@
             </div>
         </div>
 
-        <div id="dynamic-content">
-            <div id="section-about" class="content-section">
-                <div class="stat-card">
-                    <div id="profile-view">
-                        <h3>About the Chef</h3>
-                        <h2 id="display-name">Chef Name</h2>
-                        <p><strong>Location:</strong> <span id="display-location">Not set</span></p>
-                        <p><strong>Favorites:</strong> <span id="display-favorites">Not set</span></p>
-                        <button onclick="toggleEdit(true)" class="btn-action">Edit Profile</button>
-                    </div>
+<div id="section-about" class="content-section">
+    <div class="stat-card">
+        <div id="profile-view" style="text-align: center;">
+            <div style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
+                <span id="profile-initials" style="font-size: 3rem; color: #999; font-weight: bold;">?</span>
+            </div>
 
-                    <div id="profile-edit" style="display: none;">
-                        <h3>Update Profile</h3>
-                        <div style="margin-bottom: 10px;">
-                            <label>Name:</label>
-                            <input type="text" id="edit-name" style="width:100%; padding:8px; box-sizing: border-box;">
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <label>Location:</label>
-                            <input type="text" id="edit-location" style="width:100%; padding:8px; box-sizing: border-box;">
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <label>Favorites:</label>
-                            <textarea id="edit-favorites" style="width:100%; padding:8px; height: 80px; box-sizing: border-box;"></textarea>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button id="save-profile-btn" class="btn-action">Save Changes</button>
-                            <button onclick="toggleEdit(false)" class="btn-action" style="background:#888;">Cancel</button>
-                        </div>
-                    </div>
+            <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Chef Name</h2>
+            <p style="margin: 5px 0;"><strong>📍 Location:</strong> <span id="display-location">Not set</span></p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
+                <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                    <p style="margin: 0; font-size: 0.8rem; font-weight: bold; color: var(--primary-green);">FAVORITE FOOD</p>
+                    <span id="display-fav-food">Not set</span>
+                </div>
+                <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                    <p style="margin: 0; font-size: 0.8rem; font-weight: bold; color: var(--primary-green);">FAVORITE RESTAURANT</p>
+                    <span id="display-fav-restaurant">Not set</span>
                 </div>
             </div>
+
+            <button onclick="toggleEdit(true)" class="btn-action" style="width: 100%; margin-top: 20px;">Edit Profile</button>
+        </div>
+
+        <div id="profile-edit" style="display: none;">
+            <h3>Update Your Chef Profile</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 0.9rem;">Name:</label>
+                <input type="text" id="edit-name" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 0.9rem;">Location:</label>
+                <input type="text" id="edit-location" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 0.9rem;">Favorite Food:</label>
+                <input type="text" id="edit-fav-food" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 0.9rem;">Favorite Restaurant:</label>
+                <input type="text" id="edit-fav-restaurant" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
+                <button onclick="toggleEdit(false)" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
             <div id="section-pantry" class="content-section" style="display:none;">
                 <div class="stat-card">
