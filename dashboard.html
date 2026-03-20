@@ -418,7 +418,32 @@
             document.getElementById('tab-shopping').style.borderBottom = subId === 'shopping-list' ? '3px solid var(--primary-green)' : 'none';
             document.getElementById('tab-shopping').style.color = subId === 'shopping-list' ? 'var(--primary-green)' : '#999';
         };
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+        function generateWeeklyGrid() {
+            const grid = document.getElementById('weekly-grid');
+            grid.innerHTML = days.map(day => `
+        <div class="day-card" style="background:var(--logo-cream); padding:20px; border-radius:12px; border: 1px solid #eee; transition: transform 0.2s;">
+            <h4 style="margin:0 0 10px 0; color:var(--primary-green); border-bottom: 1px solid var(--accent-gold); padding-bottom: 5px;">${day}</h4>
+            
+            <div id="meal-${day.toLowerCase()}" style="min-height: 50px; margin-bottom: 15px;">
+                <p style="font-size:0.85rem; color:#888; font-style: italic;">No meal planned</p>
+            </div>
+
+            <button onclick="openMealPicker('${day}')" class="btn-action" style="width: 100%; font-size: 0.75rem; padding: 8px;">
+                + Assign Recipe
+            </button>
+        </div>
+    `).join('');
+        }
+
+        // Run this as soon as the page loads
+        generateWeeklyGrid();
+
+        // Placeholder for the picker (we'll build this when the Cookbook is ready!)
+        window.openMealPicker = (day) => {
+            alert(`Coming soon! You'll be able to pick a recipe for ${day} from your Cookbook.`);
+        };
 
     </script>
     <div id="toast">Profile Updated! 🍳</div>
