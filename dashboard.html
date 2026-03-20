@@ -93,7 +93,6 @@
             }
         }
 
-
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -116,27 +115,13 @@
         }
 
         @keyframes fadein {
-            from {
-                bottom: 0;
-                opacity: 0;
-            }
-
-            to {
-                bottom: 30px;
-                opacity: 1;
-            }
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
         }
 
         @keyframes fadeout {
-            from {
-                bottom: 30px;
-                opacity: 1;
-            }
-
-            to {
-                bottom: 0;
-                opacity: 0;
-            }
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -166,23 +151,17 @@
             <div id="section-about" class="content-section">
                 <div class="stat-card">
                     <div id="profile-view" style="text-align: center;">
-                        <div id="avatar-container"
-                            style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
+                        <div id="avatar-container" style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
                             <span id="profile-initials" style="font-size: 3rem; color: #999;">?</span>
                         </div>
-
                         <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Loading...</h2>
                         <p><strong>📍 Location:</strong> <span id="display-location">Loading...</span></p>
-
-                        <div
-                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
-                            <div
-                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
+                            <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE FOOD</p>
                                 <span id="display-fav-food">Loading...</span>
                             </div>
-                            <div
-                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                            <div style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
                                 <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE RESTAURANT</p>
                                 <span id="display-fav-restaurant">Loading...</span>
                             </div>
@@ -197,11 +176,9 @@
                         <label>Favorite Food:</label><input type="text" id="edit-fav-food">
                         <label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant">
                         <label>Profile Picture:</label><input type="file" id="profile-upload" accept="image/*">
-
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
                             <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
-                            <button onclick="toggleEdit(false)" class="btn-action"
-                                style="flex: 1; background:#888;">Cancel</button>
+                            <button onclick="toggleEdit(false)" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -209,43 +186,33 @@
 
             <div id="section-pantry" class="content-section" style="display:none;">
                 <div class="stat-card">
-                    <div
-                        style="display: flex; gap: 20px; border-bottom: 2px solid var(--logo-cream); margin-bottom: 20px;">
-                        <h3 onclick="showPantrySub('menu-plan')" id="tab-menu"
-                            style="cursor:pointer; padding-bottom:10px; border-bottom: 3px solid var(--primary-green);">
-                            Menu Plan</h3>
-                        <h3 onclick="showPantrySub('shopping-list')" id="tab-shopping"
-                            style="cursor:pointer; padding-bottom:10px; color: #999;">Shopping List</h3>
+                    <div style="display: flex; gap: 20px; border-bottom: 2px solid var(--logo-cream); margin-bottom: 20px;">
+                        <h3 onclick="showPantrySub('menu-plan')" id="tab-menu" style="cursor:pointer; padding-bottom:10px; border-bottom: 3px solid var(--primary-green);">Menu Plan</h3>
+                        <h3 onclick="showPantrySub('shopping-list')" id="tab-shopping" style="cursor:pointer; padding-bottom:10px; color: #999;">Shopping List</h3>
                     </div>
-
                     <div id="sub-menu-plan">
-                        <div id="weekly-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        </div>
+                        <div id="weekly-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;"></div>
                     </div>
-
                     <div id="sub-shopping-list" style="display:none;">
                         <ul id="shopping-items" style="list-style:none; padding:0;">
-                            <li style="padding:10px; border-bottom:1px solid #eee;">🛒 Your list is empty. Add meals to
-                                your plan to see ingredients!</li>
+                            <li style="padding:10px; border-bottom:1px solid #eee;">🛒 Your list is empty. Add meals to your plan to see ingredients!</li>
                         </ul>
                     </div>
                 </div>
             </div>
+
             <div id="section-cookbook" class="content-section" style="display:none;">
                 <div class="stat-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin:0;">My Cookbook</h3>
                         <button onclick="openRecipeModal()" class="btn-action" style="margin:0;">+ New Recipe</button>
                     </div>
-
-                    <div id="recipe-list"
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div id="recipe-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
                         <p style="color:#888;">Your cookbook is empty. Add your first masterpiece!</p>
                     </div>
                 </div>
             </div>
+
             <div id="section-leftovers" class="content-section" style="display:none;">
                 <div class="stat-card">
                     <h3>Leftovers</h3>
@@ -254,24 +221,63 @@
         </div>
     </div>
 
-    <div id="cropper-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
-        <div
-            style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
+    <div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
+        <div style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
             <h3>Crop Profile Picture</h3>
             <div style="max-height:400px; margin-bottom:20px;">
                 <img id="cropper-image" style="max-width:100%;">
             </div>
             <button id="crop-done-btn" class="btn-action">Done</button>
-            <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action"
-                style="background:#888;">Cancel</button>
+            <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action" style="background:#888;">Cancel</button>
         </div>
     </div>
+
+    <div id="recipe-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
+            <h2 style="color:var(--primary-green); margin-top:0;">Add New Recipe</h2>
+            <label>Recipe Title:</label>
+            <input type="text" id="recipe-title" placeholder="e.g. Grandma's Lasagna">
+
+            <label style="margin-top:15px; display:block;">Meal Type:</label>
+            <select id="recipe-category" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
+                <option value="Dinner">Dinner</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Breakfast">Breakfast</option>
+                <option value="Salads">Salads</option>
+                <option value="Deserts">Deserts</option>
+                <option value="Sauces">Sauces</option>
+                <option value="Drinks">Drinks</option>
+            </select>
+
+            <label style="margin-top:15px; display:block;">Cuisine Style (Subcategory):</label>
+            <select id="recipe-subcategory" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
+                <option value="None">None</option>
+                <option value="Mexican">Mexican</option>
+                <option value="Italian">Italian</option>
+                <option value="BBQ">BBQ</option>
+                <option value="Southern">Southern</option>
+                <option value="Asian">Asian</option>
+            </select>
+
+            <label style="margin-top:15px; display:block;">Ingredients (One per line):</label>
+            <textarea id="recipe-ingredients" style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;" placeholder="2 lbs Ground Beef&#10;1 Onion&#10;Taco Shells"></textarea>
+
+            <label style="margin-top:15px; display:block;">Instructions:</label>
+            <textarea id="recipe-instructions" style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;" placeholder="Brown the beef..."></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="save-recipe-btn" class="btn-action" style="flex: 2;">Save to Cookbook</button>
+                <button onclick="closeRecipeModal()" class="btn-action" style="flex: 1; background:#888;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">Profile Updated! 🍳</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -316,7 +322,7 @@
                     document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
                 });
 
-                // --- 2. RECIPE LISTENER (THE PART YOU WERE LOOKING FOR) ---
+                // --- 2. RECIPE LISTENER ---
                 onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
                     const list = document.getElementById('recipe-list');
                     if (snap.empty) {
@@ -326,29 +332,18 @@
 
                     list.innerHTML = snap.docs.map(doc => {
                         const recipe = doc.data();
-                        const recipeId = doc.id; // We need this ID to delete the specific recipe
-
+                        const recipeId = doc.id;
                         return `
-        <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:15px; position:relative;">
-            <div style="font-size: 0.7rem; font-weight: bold; color: var(--primary-green); text-transform: uppercase; letter-spacing: 1px;">
-                ${recipe.category}
-            </div>
-            
-            <div style="font-size: 0.65rem; color: var(--accent-gold); font-weight: 600; margin-bottom: 5px;">
-                ${recipe.subCategory !== 'None' ? recipe.subCategory : ''}
-            </div>
-
-            <h4 style="margin: 5px 0; font-size: 1.1rem;">${recipe.title}</h4>
-            <p style="font-size: 0.8rem; color: #666; margin: 5px 0;">${recipe.ingredients.length} Ingredients</p>
-            
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn-action" style="padding: 5px 10px; font-size: 0.7rem; flex: 1;">View</button>
-                <button onclick="deleteRecipe('${recipeId}')" style="padding: 5px 10px; font-size: 0.7rem; background: #ffbaba; color: #a00; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                    Delete
-                </button>
-            </div>
-        </div>
-    `;
+                            <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:10px; position:relative;">
+                                <div style="font-size: 0.7rem; font-weight: bold; color: var(--primary-green); text-transform: uppercase;">${recipe.category}</div>
+                                <div style="font-size: 0.65rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase;">${recipe.subCategory !== 'None' ? recipe.subCategory : ''}</div>
+                                <h4 style="margin: 5px 0;">${recipe.title}</h4>
+                                <div style="display:flex; gap:10px;">
+                                    <button class="btn-action" style="padding: 5px 10px; font-size: 0.7rem; margin-top:5px;">View</button>
+                                    <button onclick="deleteRecipe('${recipeId}')" class="btn-action" style="padding: 5px 10px; font-size: 0.7rem; margin-top:5px; background:#ffbaba; color:#a00;">Delete</button>
+                                </div>
+                            </div>
+                        `;
                     }).join('');
                 });
 
@@ -365,7 +360,6 @@
                             favRestaurant: document.getElementById('edit-fav-restaurant').value,
                             updatedAt: new Date()
                         };
-
                         if (cropper) {
                             const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
                             const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
@@ -373,7 +367,6 @@
                             await uploadBytes(storageRef, blob);
                             profileData.photoURL = await getDownloadURL(storageRef);
                         }
-
                         await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
                         toggleEdit(false);
                         const toast = document.getElementById("toast");
@@ -396,6 +389,7 @@
                         const recipeData = {
                             title: document.getElementById('recipe-title').value,
                             category: document.getElementById('recipe-category').value,
+                            subCategory: document.getElementById('recipe-subcategory').value,
                             ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
                             instructions: document.getElementById('recipe-instructions').value,
                             createdAt: new Date()
@@ -437,21 +431,31 @@
         window.openRecipeModal = () => document.getElementById('recipe-modal').style.display = 'flex';
         window.closeRecipeModal = () => document.getElementById('recipe-modal').style.display = 'none';
 
+        window.deleteRecipe = async (recipeId) => {
+            const user = auth.currentUser;
+            if (!user) return;
+            if (confirm("Delete this masterpiece?")) {
+                try {
+                    await deleteDoc(doc(db, "profiles", user.uid, "recipes", recipeId));
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+            }
+        };
+
         // UI Initialization
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         const grid = document.getElementById('weekly-grid');
         grid.innerHTML = days.map(day => `
-        <div class="day-card" style="background:white; padding:15px; border-radius:12px; border: 1px solid #eee;">
-            <h4 style="margin:0 0 10px 0; color:var(--primary-green);">${day}</h4>
-            <div id="meal-${day.toLowerCase()}" style="min-height: 40px; font-size:0.8rem; color:#888;">No meal planned</div>
-            <button onclick="alert('Linking coming soon!')" class="btn-action" style="width: 100%; font-size: 0.7rem; padding: 5px;">+ Assign</button>
-        </div>
-    `).join('');
+            <div class="day-card" style="background:white; padding:15px; border-radius:12px; border: 1px solid #eee;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary-green);">${day}</h4>
+                <div id="meal-${day.toLowerCase()}" style="min-height: 40px; font-size:0.8rem; color:#888;">No meal planned</div>
+                <button onclick="alert('Linking coming soon!')" class="btn-action" style="width: 100%; font-size: 0.7rem; padding: 5px;">+ Assign</button>
+            </div>
+        `).join('');
 
-        // Logout
         document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-        // Profile Upload Trigger
         document.getElementById('profile-upload').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -467,57 +471,6 @@
             }
         };
         document.getElementById('crop-done-btn').onclick = () => document.getElementById('cropper-modal').style.display = 'none';
-
     </script>
-    <div id="toast">Profile Updated! 🍳</div>
-
-    <div id="recipe-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-        <div
-            style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
-            <h2 style="color:var(--primary-green); margin-top:0;">Add New Recipe</h2>
-
-            <label>Recipe Title:</label>
-            <input type="text" id="recipe-title" placeholder="e.g. Grandma's Lasagna">
-
-            <label style="margin-top:15px; display:block;">Category:</label>
-            <select id="recipe-category"
-                style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
-                <optgroup label="Meal Type">
-                    <option value="Dinner">Dinner</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Salads">Salads</option>
-                    <option value="Deserts">Deserts</option>
-                    <option value="Sauces">Sauces</option>
-                    <option value="Drinks">Drinks</option>
-                </optgroup>
-                <optgroup label="Cuisine / Style">
-                    <option value="BBQ">BBQ</option>
-                    <option value="Italian">Italian</option>
-                    <option value="Mexican">Mexican</option>
-                    <option value="Southern">Southern</option>
-                </optgroup>
-            </select>
-
-            <label style="margin-top:15px; display:block;">Ingredients (One per line):</label>
-            <textarea id="recipe-ingredients"
-                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
-                placeholder="2 lbs Ground Beef&#10;1 Onion&#10;Taco Shells"></textarea>
-
-            <label style="margin-top:15px; display:block;">Instructions:</label>
-            <textarea id="recipe-instructions"
-                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
-                placeholder="Brown the beef..."></textarea>
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button id="save-recipe-btn" class="btn-action" style="flex: 2;">Save to Cookbook</button>
-                <button onclick="closeRecipeModal()" class="btn-action"
-                    style="flex: 1; background:#888;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-
 </body>
-
 </html>
