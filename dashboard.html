@@ -234,7 +234,16 @@
             </div>
             <div id="section-cookbook" class="content-section" style="display:none;">
                 <div class="stat-card">
-                    <h3>My Cookbook</h3>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin:0;">My Cookbook</h3>
+                        <button onclick="openRecipeModal()" class="btn-action" style="margin:0;">+ New Recipe</button>
+                    </div>
+
+                    <div id="recipe-list"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <p style="color:#888;">Your cookbook is empty. Add your first masterpiece!</p>
+                    </div>
                 </div>
             </div>
             <div id="section-leftovers" class="content-section" style="display:none;">
@@ -262,7 +271,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -279,15 +288,14 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        let cropper; // Keep cropper in the outer scope
+        let cropper;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // 1. DATA LISTENER
+                // --- 1. PROFILE DATA LISTENER ---
                 onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
                     const data = docSnap.data() || {};
                     const chefName = data.name || "Chef";
-
                     document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
                     document.getElementById('display-name').innerText = chefName;
                     document.getElementById('display-location').innerText = data.location || "Not set";
@@ -308,44 +316,33 @@
                     document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
                 });
 
-                // 2. CROPPER LOGIC
-                const fileInput = document.getElementById('profile-upload');
-                const cropperModal = document.getElementById('cropper-modal');
-                const cropperImg = document.getElementById('cropper-image');
-
-                fileInput.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        if (file.size > 5242880) { // 5MB limit for raw selection
-                            alert("File is too large! Try a smaller image.");
-                            return;
-                        }
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            cropperImg.src = event.target.result;
-                            cropperModal.style.display = 'flex';
-                            if (cropper) cropper.destroy();
-                            cropper = new Cropper(cropperImg, {
-                                aspectRatio: 1,
-                                viewMode: 1,
-                            });
-                        };
-                        reader.readAsDataURL(file);
+                // --- 2. RECIPE LISTENER (THE PART YOU WERE LOOKING FOR) ---
+                onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
+                    const list = document.getElementById('recipe-list');
+                    if (snap.empty) {
+                        list.innerHTML = `<p style="color:#888;">Your cookbook is empty. Add your first masterpiece!</p>`;
+                        return;
                     }
-                };
 
-                document.getElementById('crop-done-btn').onclick = () => {
-                    cropperModal.style.display = 'none';
-                };
+                    list.innerHTML = snap.docs.map(doc => {
+                        const recipe = doc.data();
+                        return `
+                        <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:10px;">
+                            <span style="font-size: 0.7rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase;">${recipe.category}</span>
+                            <h4 style="margin: 5px 0;">${recipe.title}</h4>
+                            <p style="font-size: 0.8rem; color: #666;">${recipe.ingredients.length} Ingredients</p>
+                            <button class="btn-action" style="padding: 5px 10px; font-size: 0.7rem;">View Recipe</button>
+                        </div>
+                    `;
+                    }).join('');
+                });
 
-                // 3. CONSOLIDATED SAVE LOGIC
+                // --- 3. PROFILE SAVE LOGIC ---
                 document.getElementById('save-profile-btn').onclick = async () => {
                     const saveBtn = document.getElementById('save-profile-btn');
                     saveBtn.innerText = "Processing...";
                     saveBtn.disabled = true;
-
                     try {
-                        // 1. Start with the text data
                         const profileData = {
                             name: document.getElementById('edit-name').value,
                             location: document.getElementById('edit-location').value,
@@ -354,49 +351,59 @@
                             updatedAt: new Date()
                         };
 
-                        // 2. Handle the Image
                         if (cropper) {
-                            saveBtn.innerText = "Uploading Image...";
-
                             const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-                            const blob = await new Promise((resolve, reject) => {
-                                canvas.toBlob((b) => b ? resolve(b) : reject("Canvas empty"), 'image/jpeg', 0.8);
-                            });
-
+                            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
                             const storageRef = ref(storage, `profile_pics/${user.uid}`);
                             await uploadBytes(storageRef, blob);
-
-                            // This is the missing link! We get the URL and add it to our object
-                            const downloadURL = await getDownloadURL(storageRef);
-                            profileData.photoURL = downloadURL;
+                            profileData.photoURL = await getDownloadURL(storageRef);
                         }
 
-                        // 3. Save EVERYTHING to Firestore in one go
-                        saveBtn.innerText = "Saving Profile...";
                         await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-
                         toggleEdit(false);
                         const toast = document.getElementById("toast");
                         toast.className = "show";
                         setTimeout(() => { toast.className = ""; }, 3000);
-
                     } catch (e) {
-                        console.error("Save Error:", e);
                         alert("Upload failed: " + e.message);
                     } finally {
                         saveBtn.innerText = "Save Changes";
                         saveBtn.disabled = false;
-                        if (cropper) { cropper.destroy(); cropper = null; }
+                    }
+                };
+
+                // --- 4. RECIPE SAVE LOGIC ---
+                document.getElementById('save-recipe-btn').onclick = async () => {
+                    const btn = document.getElementById('save-recipe-btn');
+                    btn.innerText = "Saving...";
+                    btn.disabled = true;
+                    try {
+                        const recipeData = {
+                            title: document.getElementById('recipe-title').value,
+                            category: document.getElementById('recipe-category').value,
+                            ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
+                            instructions: document.getElementById('recipe-instructions').value,
+                            createdAt: new Date()
+                        };
+                        await addDoc(collection(db, "profiles", user.uid, "recipes"), recipeData);
+                        closeRecipeModal();
+                        document.getElementById('recipe-title').value = "";
+                        document.getElementById('recipe-ingredients').value = "";
+                        document.getElementById('recipe-instructions').value = "";
+                    } catch (e) {
+                        alert("Error saving recipe: " + e.message);
+                    } finally {
+                        btn.innerText = "Save to Cookbook";
+                        btn.disabled = false;
                     }
                 };
 
             } else {
-                // This closes the "if (user)" block so the redirect works
                 window.location.href = "index.html";
             }
-        }); // This closes the onAuthStateChanged listener
+        });
 
-        // Helper functions exposed to the window
+        // --- GLOBAL HELPERS ---
         window.toggleEdit = (isEditing) => {
             document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
             document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
@@ -407,82 +414,44 @@
             document.getElementById(`section-${sectionId}`).style.display = 'block';
         };
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
         window.showPantrySub = (subId) => {
             document.getElementById('sub-menu-plan').style.display = subId === 'menu-plan' ? 'block' : 'none';
             document.getElementById('sub-shopping-list').style.display = subId === 'shopping-list' ? 'block' : 'none';
-
-            // Visual Tab Styling
-            document.getElementById('tab-menu').style.borderBottom = subId === 'menu-plan' ? '3px solid var(--primary-green)' : 'none';
-            document.getElementById('tab-menu').style.color = subId === 'menu-plan' ? 'var(--primary-green)' : '#999';
-            document.getElementById('tab-shopping').style.borderBottom = subId === 'shopping-list' ? '3px solid var(--primary-green)' : 'none';
-            document.getElementById('tab-shopping').style.color = subId === 'shopping-list' ? 'var(--primary-green)' : '#999';
-        };
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        function generateWeeklyGrid() {
-            const grid = document.getElementById('weekly-grid');
-            grid.innerHTML = days.map(day => `
-        <div class="day-card" style="background:var(--logo-cream); padding:20px; border-radius:12px; border: 1px solid #eee; transition: transform 0.2s;">
-            <h4 style="margin:0 0 10px 0; color:var(--primary-green); border-bottom: 1px solid var(--accent-gold); padding-bottom: 5px;">${day}</h4>
-            
-            <div id="meal-${day.toLowerCase()}" style="min-height: 50px; margin-bottom: 15px;">
-                <p style="font-size:0.85rem; color:#888; font-style: italic;">No meal planned</p>
-            </div>
-
-            <button onclick="openMealPicker('${day}')" class="btn-action" style="width: 100%; font-size: 0.75rem; padding: 8px;">
-                + Assign Recipe
-            </button>
-        </div>
-    `).join('');
-        }
-
-        // Run this as soon as the page loads
-        generateWeeklyGrid();
-
-        // Placeholder for the picker (we'll build this when the Cookbook is ready!)
-        window.openMealPicker = (day) => {
-            alert(`Coming soon! You'll be able to pick a recipe for ${day} from your Cookbook.`);
         };
 
-        import { collection, addDoc, query, onSnapshot as onRecipeSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Modal Helpers
         window.openRecipeModal = () => document.getElementById('recipe-modal').style.display = 'flex';
         window.closeRecipeModal = () => document.getElementById('recipe-modal').style.display = 'none';
 
-        // Save Recipe
-        document.getElementById('save-recipe-btn').onclick = async () => {
-            const btn = document.getElementById('save-recipe-btn');
-            btn.innerText = "Saving...";
-            btn.disabled = true;
+        // UI Initialization
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const grid = document.getElementById('weekly-grid');
+        grid.innerHTML = days.map(day => `
+        <div class="day-card" style="background:white; padding:15px; border-radius:12px; border: 1px solid #eee;">
+            <h4 style="margin:0 0 10px 0; color:var(--primary-green);">${day}</h4>
+            <div id="meal-${day.toLowerCase()}" style="min-height: 40px; font-size:0.8rem; color:#888;">No meal planned</div>
+            <button onclick="alert('Linking coming soon!')" class="btn-action" style="width: 100%; font-size: 0.7rem; padding: 5px;">+ Assign</button>
+        </div>
+    `).join('');
 
-            try {
-                const recipeData = {
-                    title: document.getElementById('recipe-title').value,
-                    category: document.getElementById('recipe-category').value,
-                    ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
-                    instructions: document.getElementById('recipe-instructions').value,
-                    createdAt: new Date()
+        // Logout
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+        // Profile Upload Trigger
+        document.getElementById('profile-upload').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const cropperImg = document.getElementById('cropper-image');
+                    cropperImg.src = event.target.result;
+                    document.getElementById('cropper-modal').style.display = 'flex';
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(cropperImg, { aspectRatio: 1, viewMode: 1 });
                 };
-
-                // Save to profiles -> UID -> recipes
-                const user = auth.currentUser;
-                await addDoc(collection(db, "profiles", user.uid, "recipes"), recipeData);
-
-                closeRecipeModal();
-                // Reset form
-                document.getElementById('recipe-title').value = "";
-                document.getElementById('recipe-ingredients').value = "";
-                document.getElementById('recipe-instructions').value = "";
-
-            } catch (e) {
-                alert("Error saving recipe: " + e.message);
-            } finally {
-                btn.innerText = "Save to Cookbook";
-                btn.disabled = false;
+                reader.readAsDataURL(file);
             }
         };
+        document.getElementById('crop-done-btn').onclick = () => document.getElementById('cropper-modal').style.display = 'none';
 
     </script>
     <div id="toast">Profile Updated! 🍳</div>
