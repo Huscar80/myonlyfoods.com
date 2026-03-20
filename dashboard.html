@@ -312,51 +312,31 @@
         </div>
     </div>
 
-    <div id="view-recipe-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-        <div
-            style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
-            <button onclick="closeViewModal()"
-                style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
+<div id="view-recipe-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
+            <button onclick="closeViewModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
 
-            <span id="view-recipe-tags"
-                style="font-size: 0.7rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase; letter-spacing:1px;"></span>
-            <h2 id="view-recipe-title"
-                style="color:var(--primary-green); margin: 5px 0 20px 0; border-bottom: 2px solid var(--logo-cream); padding-bottom:10px;">
-            </h2>
+            <span id="view-recipe-tags" style="font-size: 0.7rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase; letter-spacing:1px;"></span>
+            <h2 id="view-recipe-title" style="color:var(--primary-green); margin: 5px 0 20px 0; border-bottom: 2px solid var(--logo-cream); padding-bottom:10px;"></h2>
 
             <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
                 <div>
                     <h4 style="margin-bottom:10px; color:var(--primary-green);">🛒 Ingredients</h4>
-                    <ul id="view-recipe-ingredients" style="padding-left:20px; line-height:1.6; font-size:0.95rem;">
-                    </ul>
+                    <ul id="view-recipe-ingredients" style="padding-left:20px; line-height:1.6; font-size:0.95rem;"></ul>
                 </div>
                 <div>
                     <h4 style="margin-bottom:10px; color:var(--primary-green);">👨‍🍳 Instructions</h4>
-                    <p id="view-recipe-instructions"
-                        style="white-space: pre-wrap; line-height:1.6; font-size:0.95rem; color:#444; background:var(--logo-cream); padding:15px; border-radius:8px;">
-                    </p>
+                    <p id="view-recipe-instructions" style="white-space: pre-wrap; line-height:1.6; font-size:0.95rem; color:#444; background:var(--logo-cream); padding:15px; border-radius:8px;"></p>
                 </div>
             </div>
 
-            <button onclick="closeViewModal()" class="btn-action" style="width:100%; margin-top:20px;">Close
-                Recipe</button>
-        </div>
-        <div id="meal-picker-modal"
-            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-            <div
-                style="max-width:400px; width:100%; background:white; padding:30px; border-radius:15px; text-align:center;">
-                <h3 id="picker-day-title" style="color:var(--primary-green); margin-top:0;">Assign Meal</h3>
-                <div id="picker-recipe-list"
-                    style="max-height:300px; overflow-y:auto; margin: 20px 0; text-align:left;">
-                </div>
-                <button onclick="document.getElementById('meal-picker-modal').style.display='none'" class="btn-action"
-                    style="background:#888; width:100%;">Cancel</button>
-            </div>
-        </div>
-
-
-    </div>
+            <button onclick="closeViewModal()" class="btn-action" style="width:100%; margin-top:20px;">Close Recipe</button>
+        </div> </div> <div id="meal-picker-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div style="max-width:400px; width:100%; background:white; padding:30px; border-radius:15px; text-align:center;">
+            <h3 id="picker-day-title" style="color:var(--primary-green); margin-top:0;">Assign Meal</h3>
+            <div id="picker-recipe-list" style="max-height:300px; overflow-y:auto; margin: 20px 0; text-align:left;"></div>
+            <button onclick="document.getElementById('meal-picker-modal').style.display='none'" class="btn-action" style="background:#888; width:100%;">Cancel</button>
+        </div> </div> ```
 
     <div id="toast">Profile Updated! 🍳</div>
 
