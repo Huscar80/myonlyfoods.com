@@ -209,7 +209,34 @@
 
             <div id="section-pantry" class="content-section" style="display:none;">
                 <div class="stat-card">
-                    <h3>My Pantry</h3>
+                    <div
+                        style="display: flex; gap: 20px; border-bottom: 2px solid var(--logo-cream); margin-bottom: 20px;">
+                        <h3 onclick="showPantrySub('menu-plan')" id="tab-menu"
+                            style="cursor:pointer; padding-bottom:10px; border-bottom: 3px solid var(--primary-green);">
+                            Menu Plan</h3>
+                        <h3 onclick="showPantrySub('shopping-list')" id="tab-shopping"
+                            style="cursor:pointer; padding-bottom:10px; color: #999;">Shopping List</h3>
+                    </div>
+
+                    <div id="sub-menu-plan">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                            <div class="day-card"
+                                style="background:var(--logo-cream); padding:10px; border-radius:8px; text-align:center;">
+                                <h4 style="margin:0; color:var(--primary-green);">Monday</h4>
+                                <p style="font-size:0.8rem; color:#666;">No meal selected</p>
+                                <button class="btn-action" style="padding:5px 10px; font-size:0.7rem;">+ Add
+                                    Meal</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sub-shopping-list" style="display:none;">
+                        <ul id="shopping-items" style="list-style:none; padding:0;">
+                            <li style="padding:10px; border-bottom:1px solid #eee;">🛒 Your list is empty. Add meals to
+                                your plan to see ingredients!</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div id="section-cookbook" class="content-section" style="display:none;">
@@ -388,6 +415,18 @@
         };
 
         document.getElementById('logout-btn').onclick = () => signOut(auth);
+        window.showPantrySub = (subId) => {
+            document.getElementById('sub-menu-plan').style.display = subId === 'menu-plan' ? 'block' : 'none';
+            document.getElementById('sub-shopping-list').style.display = subId === 'shopping-list' ? 'block' : 'none';
+
+            // Visual Tab Styling
+            document.getElementById('tab-menu').style.borderBottom = subId === 'menu-plan' ? '3px solid var(--primary-green)' : 'none';
+            document.getElementById('tab-menu').style.color = subId === 'menu-plan' ? 'var(--primary-green)' : '#999';
+            document.getElementById('tab-shopping').style.borderBottom = subId === 'shopping-list' ? '3px solid var(--primary-green)' : 'none';
+            document.getElementById('tab-shopping').style.color = subId === 'shopping-list' ? 'var(--primary-green)' : '#999';
+        };
+
+
     </script>
     <div id="toast">Profile Updated! 🍳</div>
 
