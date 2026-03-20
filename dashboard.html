@@ -445,8 +445,94 @@
             alert(`Coming soon! You'll be able to pick a recipe for ${day} from your Cookbook.`);
         };
 
+        import { collection, addDoc, query, onSnapshot as onRecipeSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Modal Helpers
+        window.openRecipeModal = () => document.getElementById('recipe-modal').style.display = 'flex';
+        window.closeRecipeModal = () => document.getElementById('recipe-modal').style.display = 'none';
+
+        // Save Recipe
+        document.getElementById('save-recipe-btn').onclick = async () => {
+            const btn = document.getElementById('save-recipe-btn');
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            try {
+                const recipeData = {
+                    title: document.getElementById('recipe-title').value,
+                    category: document.getElementById('recipe-category').value,
+                    ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
+                    instructions: document.getElementById('recipe-instructions').value,
+                    createdAt: new Date()
+                };
+
+                // Save to profiles -> UID -> recipes
+                const user = auth.currentUser;
+                await addDoc(collection(db, "profiles", user.uid, "recipes"), recipeData);
+
+                closeRecipeModal();
+                // Reset form
+                document.getElementById('recipe-title').value = "";
+                document.getElementById('recipe-ingredients').value = "";
+                document.getElementById('recipe-instructions').value = "";
+
+            } catch (e) {
+                alert("Error saving recipe: " + e.message);
+            } finally {
+                btn.innerText = "Save to Cookbook";
+                btn.disabled = false;
+            }
+        };
+
     </script>
     <div id="toast">Profile Updated! 🍳</div>
+
+    <div id="recipe-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div
+            style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
+            <h2 style="color:var(--primary-green); margin-top:0;">Add New Recipe</h2>
+
+            <label>Recipe Title:</label>
+            <input type="text" id="recipe-title" placeholder="e.g. Grandma's Lasagna">
+
+            <label style="margin-top:15px; display:block;">Category:</label>
+            <select id="recipe-category"
+                style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
+                <optgroup label="Meal Type">
+                    <option value="Dinner">Dinner</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Salads">Salads</option>
+                    <option value="Deserts">Deserts</option>
+                    <option value="Sauces">Sauces</option>
+                    <option value="Drinks">Drinks</option>
+                </optgroup>
+                <optgroup label="Cuisine / Style">
+                    <option value="BBQ">BBQ</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Mexican">Mexican</option>
+                    <option value="Southern">Southern</option>
+                </optgroup>
+            </select>
+
+            <label style="margin-top:15px; display:block;">Ingredients (One per line):</label>
+            <textarea id="recipe-ingredients"
+                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
+                placeholder="2 lbs Ground Beef&#10;1 Onion&#10;Taco Shells"></textarea>
+
+            <label style="margin-top:15px; display:block;">Instructions:</label>
+            <textarea id="recipe-instructions"
+                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
+                placeholder="Brown the beef..."></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="save-recipe-btn" class="btn-action" style="flex: 2;">Save to Cookbook</button>
+                <button onclick="closeRecipeModal()" class="btn-action"
+                    style="flex: 1; background:#888;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
 </body>
 
