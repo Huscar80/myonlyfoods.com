@@ -1,63 +1,425 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, deleteDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+<!DOCTYPE html>
+<html lang="en">
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-        authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-        projectId: "myonlyfoods-e9ee8",
-        storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-        messagingSenderId: "790098672248",
-        appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
-    };
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | myonlyfoods</title>
+    <style>
+        :root {
+            --logo-cream: #f8f6f1;
+            --primary-green: #2e5a35;
+            --white: #ffffff;
+            --accent-gold: #c5a059;
+        }
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--logo-cream);
+            display: flex;
+            min-height: 100vh;
+        }
 
-    let cropper;
-    let selectedDay = ""; 
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-green);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // --- 1. PROFILE DATA LISTENER ---
-            onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
-                const data = docSnap.data() || {};
-                const chefName = data.name || "Chef";
-                document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
-                document.getElementById('display-name').innerText = chefName;
-                document.getElementById('display-location').innerText = data.location || "Not set";
-                document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
-                document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
+        .nav-item {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
 
-                const avatar = document.getElementById('avatar-container');
-                if (data.photoURL) {
-                    avatar.innerHTML = `<img src="${data.photoURL}?t=${new Date().getTime()}" style="width:100%; height:100%; object-fit:cover;">`;
-                } else {
-                    const initial = chefName.charAt(0).toUpperCase();
-                    avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
-                }
-                document.getElementById('edit-name').value = data.name || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-fav-food').value = data.favFood || "";
-                document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
-            });
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+        }
 
-            // --- 2. RECIPE LISTENER ---
-            onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
-                const list = document.getElementById('recipe-list');
-                if (snap.empty) {
-                    list.innerHTML = `<p style="color:#888;">Your cookbook is empty. Add your masterpiece!</p>`;
-                    return;
-                }
-                list.innerHTML = snap.docs.map(doc => {
-                    const recipe = doc.data();
-                    const recipeId = doc.id;
-                    const subTag = recipe.subCategory && recipe.subCategory !== 'None' ? recipe.subCategory : '';
-                    return `
+        .welcome-msg h1 {
+            margin: 0;
+            color: var(--primary-green);
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            border-left: 5px solid var(--accent-gold);
+            max-width: 800px;
+        }
+
+        .btn-action {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--primary-green);
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--primary-green);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h2>MYONLYFOODS</h2>
+        <a class="nav-item" onclick="showSection('pantry')">My Pantry</a>
+        <a class="nav-item" onclick="showSection('cookbook')">Cookbook</a>
+        <a class="nav-item" onclick="showSection('leftovers')">Leftovers</a>
+        <a class="nav-item" onclick="showSection('about')">About Me</a>
+        <a class="nav-item" id="logout-btn" style="margin-top: auto; color: #ffbaba;">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="welcome-msg">
+                <h1 id="header-greeting">Hello, Chef</h1>
+                <p>Monday, March 16, 2026</p>
+            </div>
+        </div>
+
+        <div id="dynamic-content">
+            <div id="section-about" class="content-section">
+                <div class="stat-card">
+                    <div id="profile-view" style="text-align: center;">
+                        <div id="avatar-container"
+                            style="width: 120px; height: 120px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent-gold); overflow: hidden;">
+                            <span id="profile-initials" style="font-size: 3rem; color: #999;">?</span>
+                        </div>
+                        <h2 id="display-name" style="margin-bottom: 5px; color: var(--primary-green);">Loading...</h2>
+                        <p><strong>📍 Location:</strong> <span id="display-location">Loading...</span></p>
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left;">
+                            <div
+                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                                <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE FOOD</p>
+                                <span id="display-fav-food">Loading...</span>
+                            </div>
+                            <div
+                                style="background: var(--logo-cream); padding: 15px; border-radius: 10px; border-left: 3px solid var(--primary-green);">
+                                <p style="margin: 0; font-size: 0.7rem; font-weight: bold;">FAVORITE RESTAURANT</p>
+                                <span id="display-fav-restaurant">Loading...</span>
+                            </div>
+                        </div>
+                        <button onclick="toggleEdit(true)" class="btn-action" style="width:100%;">Edit Profile</button>
+                    </div>
+
+                    <div id="profile-edit" style="display: none;">
+                        <h3>Update Your Chef Profile</h3>
+                        <label>Name:</label><input type="text" id="edit-name">
+                        <label>Location:</label><input type="text" id="edit-location">
+                        <label>Favorite Food:</label><input type="text" id="edit-fav-food">
+                        <label>Favorite Restaurant:</label><input type="text" id="edit-fav-restaurant">
+                        <label>Profile Picture:</label><input type="file" id="profile-upload" accept="image/*">
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button id="save-profile-btn" class="btn-action" style="flex: 2;">Save Changes</button>
+                            <button onclick="toggleEdit(false)" class="btn-action"
+                                style="flex: 1; background:#888;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-pantry" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <div
+                        style="display: flex; gap: 20px; border-bottom: 2px solid var(--logo-cream); margin-bottom: 20px;">
+                        <h3 onclick="showPantrySub('menu-plan')" id="tab-menu"
+                            style="cursor:pointer; padding-bottom:10px; border-bottom: 3px solid var(--primary-green);">
+                            Menu Plan</h3>
+                        <h3 onclick="showPantrySub('shopping-list')" id="tab-shopping"
+                            style="cursor:pointer; padding-bottom:10px; color: #999;">Shopping List</h3>
+                    </div>
+                    <div id="sub-menu-plan">
+                        <div id="weekly-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        </div>
+                    </div>
+                    <div id="sub-shopping-list" style="display:none;">
+                        <ul id="shopping-items" style="list-style:none; padding:0;">
+                            <li style="padding:10px; border-bottom:1px solid #eee;">🛒 Your list is empty. Add meals to
+                                your plan to see ingredients!</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-cookbook" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin:0;">My Cookbook</h3>
+                        <button onclick="openRecipeModal()" class="btn-action" style="margin:0;">+ New Recipe</button>
+                    </div>
+                    <div id="recipe-list"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <p style="color:#888;">Your cookbook is empty. Add your first masterpiece!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-leftovers" class="content-section" style="display:none;">
+                <div class="stat-card">
+                    <h3>Leftovers</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cropper-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column; padding:20px; box-sizing:border-box;">
+        <div
+            style="max-width:500px; width:100%; background:white; padding:20px; border-radius:10px; text-align:center;">
+            <h3>Crop Profile Picture</h3>
+            <div style="max-height:400px; margin-bottom:20px;">
+                <img id="cropper-image" style="max-width:100%;">
+            </div>
+            <button id="crop-done-btn" class="btn-action">Done</button>
+            <button onclick="document.getElementById('cropper-modal').style.display='none'" class="btn-action"
+                style="background:#888;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="recipe-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div
+            style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
+            <h2 style="color:var(--primary-green); margin-top:0;">Add New Recipe</h2>
+            <label>Recipe Title:</label>
+            <input type="text" id="recipe-title" placeholder="e.g. Grandma's Lasagna">
+
+            <label style="margin-top:15px; display:block;">Meal Type:</label>
+            <select id="recipe-category"
+                style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
+                <option value="Dinner">Dinner</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Breakfast">Breakfast</option>
+                <option value="Salads">Salads</option>
+                <option value="Deserts">Deserts</option>
+                <option value="Sauces">Sauces</option>
+                <option value="Drinks">Drinks</option>
+            </select>
+
+            <label style="margin-top:15px; display:block;">Cuisine Style (Subcategory):</label>
+            <select id="recipe-subcategory"
+                style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;">
+                <option value="None">None</option>
+                <option value="Mexican">Mexican</option>
+                <option value="Italian">Italian</option>
+                <option value="BBQ">BBQ</option>
+                <option value="Southern">Southern</option>
+                <option value="Asian">Asian</option>
+            </select>
+
+            <label style="margin-top:15px; display:block;">Ingredients (One per line):</label>
+            <textarea id="recipe-ingredients"
+                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
+                placeholder="2 lbs Ground Beef&#10;1 Onion&#10;Taco Shells"></textarea>
+
+            <label style="margin-top:15px; display:block;">Instructions:</label>
+            <textarea id="recipe-instructions"
+                style="width:100%; height:100px; padding:10px; border-radius:5px; border:1px solid #ddd; margin-top:5px;"
+                placeholder="Brown the beef..."></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="save-recipe-btn" class="btn-action" style="flex: 2;">Save to Cookbook</button>
+                <button onclick="closeRecipeModal()" class="btn-action"
+                    style="flex: 1; background:#888;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-recipe-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div
+            style="max-width:600px; width:100%; background:white; padding:30px; border-radius:15px; position:relative; max-height:90vh; overflow-y:auto;">
+            <button onclick="closeViewModal()"
+                style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
+
+            <span id="view-recipe-tags"
+                style="font-size: 0.7rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase; letter-spacing:1px;"></span>
+            <h2 id="view-recipe-title"
+                style="color:var(--primary-green); margin: 5px 0 20px 0; border-bottom: 2px solid var(--logo-cream); padding-bottom:10px;">
+            </h2>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                <div>
+                    <h4 style="margin-bottom:10px; color:var(--primary-green);">🛒 Ingredients</h4>
+                    <ul id="view-recipe-ingredients" style="padding-left:20px; line-height:1.6; font-size:0.95rem;">
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom:10px; color:var(--primary-green);">👨‍🍳 Instructions</h4>
+                    <p id="view-recipe-instructions"
+                        style="white-space: pre-wrap; line-height:1.6; font-size:0.95rem; color:#444; background:var(--logo-cream); padding:15px; border-radius:8px;">
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="closeViewModal()" class="btn-action" style="width:100%; margin-top:20px;">Close
+                Recipe</button>
+        </div>
+        <div id="meal-picker-modal"
+            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+            <div
+                style="max-width:400px; width:100%; background:white; padding:30px; border-radius:15px; text-align:center;">
+                <h3 id="picker-day-title" style="color:var(--primary-green); margin-top:0;">Assign Meal</h3>
+                <div id="picker-recipe-list"
+                    style="max-height:300px; overflow-y:auto; margin: 20px 0; text-align:left;">
+                </div>
+                <button onclick="document.getElementById('meal-picker-modal').style.display='none'" class="btn-action"
+                    style="background:#888; width:100%;">Cancel</button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div id="toast">Profile Updated! 🍳</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, deleteDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
+            authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
+            projectId: "myonlyfoods-e9ee8",
+            storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
+            messagingSenderId: "790098672248",
+            appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let cropper;
+        let selectedDay = "";
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // --- 1. PROFILE DATA LISTENER ---
+                onSnapshot(doc(db, "profiles", user.uid), (docSnap) => {
+                    const data = docSnap.data() || {};
+                    const chefName = data.name || "Chef";
+                    document.getElementById('header-greeting').innerText = `Hello, ${chefName}`;
+                    document.getElementById('display-name').innerText = chefName;
+                    document.getElementById('display-location').innerText = data.location || "Not set";
+                    document.getElementById('display-fav-food').innerText = data.favFood || "Not set";
+                    document.getElementById('display-fav-restaurant').innerText = data.favRestaurant || "Not set";
+
+                    const avatar = document.getElementById('avatar-container');
+                    if (data.photoURL) {
+                        avatar.innerHTML = `<img src="${data.photoURL}?t=${new Date().getTime()}" style="width:100%; height:100%; object-fit:cover;">`;
+                    } else {
+                        const initial = chefName.charAt(0).toUpperCase();
+                        avatar.innerHTML = `<span id="profile-initials" style="font-size: 3rem; color: #999;">${initial}</span>`;
+                    }
+                    document.getElementById('edit-name').value = data.name || "";
+                    document.getElementById('edit-location').value = data.location || "";
+                    document.getElementById('edit-fav-food').value = data.favFood || "";
+                    document.getElementById('edit-fav-restaurant').value = data.favRestaurant || "";
+                });
+
+                // --- 2. RECIPE LISTENER ---
+                onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
+                    const list = document.getElementById('recipe-list');
+                    if (snap.empty) {
+                        list.innerHTML = `<p style="color:#888;">Your cookbook is empty. Add your masterpiece!</p>`;
+                        return;
+                    }
+                    list.innerHTML = snap.docs.map(doc => {
+                        const recipe = doc.data();
+                        const recipeId = doc.id;
+                        const subTag = recipe.subCategory && recipe.subCategory !== 'None' ? recipe.subCategory : '';
+                        return `
                         <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:10px;">
                             <div style="font-size: 0.7rem; font-weight: bold; color: var(--primary-green); text-transform: uppercase;">${recipe.category}</div>
                             <div style="font-size: 0.65rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase;">${subTag}</div>
@@ -68,130 +430,130 @@
                             </div>
                         </div>
                     `;
-                }).join('');
-            });
+                    }).join('');
+                });
 
-            // --- 3. PROFILE SAVE ---
-            document.getElementById('save-profile-btn').onclick = async () => {
-                const saveBtn = document.getElementById('save-profile-btn');
-                saveBtn.innerText = "Processing...";
-                saveBtn.disabled = true;
-                try {
-                    const profileData = {
-                        name: document.getElementById('edit-name').value,
-                        location: document.getElementById('edit-location').value,
-                        favFood: document.getElementById('edit-fav-food').value,
-                        favRestaurant: document.getElementById('edit-fav-restaurant').value,
-                        updatedAt: new Date()
-                    };
-                    if (cropper) {
-                        const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-                        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-                        const storageRef = ref(storage, `profile_pics/${user.uid}`);
-                        await uploadBytes(storageRef, blob);
-                        profileData.photoURL = await getDownloadURL(storageRef);
-                    }
-                    await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
-                    toggleEdit(false);
-                    showToast("Profile Updated!");
-                } catch (e) { alert("Error: " + e.message); }
-                finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
-            };
+                // --- 3. PROFILE SAVE ---
+                document.getElementById('save-profile-btn').onclick = async () => {
+                    const saveBtn = document.getElementById('save-profile-btn');
+                    saveBtn.innerText = "Processing...";
+                    saveBtn.disabled = true;
+                    try {
+                        const profileData = {
+                            name: document.getElementById('edit-name').value,
+                            location: document.getElementById('edit-location').value,
+                            favFood: document.getElementById('edit-fav-food').value,
+                            favRestaurant: document.getElementById('edit-fav-restaurant').value,
+                            updatedAt: new Date()
+                        };
+                        if (cropper) {
+                            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+                            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                            const storageRef = ref(storage, `profile_pics/${user.uid}`);
+                            await uploadBytes(storageRef, blob);
+                            profileData.photoURL = await getDownloadURL(storageRef);
+                        }
+                        await setDoc(doc(db, "profiles", user.uid), profileData, { merge: true });
+                        toggleEdit(false);
+                        showToast("Profile Updated!");
+                    } catch (e) { alert("Error: " + e.message); }
+                    finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
+                };
 
-            // --- 4. RECIPE SAVE ---
-            document.getElementById('save-recipe-btn').onclick = async () => {
-                const btn = document.getElementById('save-recipe-btn');
-                btn.innerText = "Saving...";
-                btn.disabled = true;
-                try {
-                    const recipeData = {
-                        title: document.getElementById('recipe-title').value,
-                        category: document.getElementById('recipe-category').value,
-                        subCategory: document.getElementById('recipe-subcategory').value,
-                        ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
-                        instructions: document.getElementById('recipe-instructions').value,
-                        createdAt: new Date()
-                    };
-                    await addDoc(collection(db, "profiles", user.uid, "recipes"), recipeData);
-                    closeRecipeModal();
-                    document.getElementById('recipe-title').value = "";
-                    document.getElementById('recipe-ingredients').value = "";
-                    document.getElementById('recipe-instructions').value = "";
-                } catch (e) { alert("Error: " + e.message); }
-                finally { btn.innerText = "Save to Cookbook"; btn.disabled = false; }
-            };
+                // --- 4. RECIPE SAVE ---
+                document.getElementById('save-recipe-btn').onclick = async () => {
+                    const btn = document.getElementById('save-recipe-btn');
+                    btn.innerText = "Saving...";
+                    btn.disabled = true;
+                    try {
+                        const recipeData = {
+                            title: document.getElementById('recipe-title').value,
+                            category: document.getElementById('recipe-category').value,
+                            subCategory: document.getElementById('recipe-subcategory').value,
+                            ingredients: document.getElementById('recipe-ingredients').value.split('\n').filter(i => i.trim() !== ""),
+                            instructions: document.getElementById('recipe-instructions').value,
+                            createdAt: new Date()
+                        };
+                        await addDoc(collection(db, "profiles", user.uid, "recipes"), recipeData);
+                        closeRecipeModal();
+                        document.getElementById('recipe-title').value = "";
+                        document.getElementById('recipe-ingredients').value = "";
+                        document.getElementById('recipe-instructions').value = "";
+                    } catch (e) { alert("Error: " + e.message); }
+                    finally { btn.innerText = "Save to Cookbook"; btn.disabled = false; }
+                };
 
-        } else { window.location.href = "index.html"; }
-    });
+            } else { window.location.href = "index.html"; }
+        });
 
-    // --- GLOBAL HELPERS ---
-    window.toggleEdit = (isEditing) => {
-        document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
-        document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
-    };
+        // --- GLOBAL HELPERS ---
+        window.toggleEdit = (isEditing) => {
+            document.getElementById('profile-view').style.display = isEditing ? 'none' : 'block';
+            document.getElementById('profile-edit').style.display = isEditing ? 'block' : 'none';
+        };
 
-    window.showSection = (sectionId) => {
-        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-        document.getElementById(`section-${sectionId}`).style.display = 'block';
-    };
+        window.showSection = (sectionId) => {
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.getElementById(`section-${sectionId}`).style.display = 'block';
+        };
 
-    window.showPantrySub = (subId) => {
-        document.getElementById('sub-menu-plan').style.display = subId === 'menu-plan' ? 'block' : 'none';
-        document.getElementById('sub-shopping-list').style.display = subId === 'shopping-list' ? 'block' : 'none';
-    };
+        window.showPantrySub = (subId) => {
+            document.getElementById('sub-menu-plan').style.display = subId === 'menu-plan' ? 'block' : 'none';
+            document.getElementById('sub-shopping-list').style.display = subId === 'shopping-list' ? 'block' : 'none';
+        };
 
-    window.openRecipeModal = () => document.getElementById('recipe-modal').style.display = 'flex';
-    window.closeRecipeModal = () => document.getElementById('recipe-modal').style.display = 'none';
+        window.openRecipeModal = () => document.getElementById('recipe-modal').style.display = 'flex';
+        window.closeRecipeModal = () => document.getElementById('recipe-modal').style.display = 'none';
 
-    window.deleteRecipe = async (recipeId) => {
-        if (confirm("Delete this masterpiece?")) {
-            await deleteDoc(doc(db, "profiles", auth.currentUser.uid, "recipes", recipeId));
-        }
-    };
+        window.deleteRecipe = async (recipeId) => {
+            if (confirm("Delete this masterpiece?")) {
+                await deleteDoc(doc(db, "profiles", auth.currentUser.uid, "recipes", recipeId));
+            }
+        };
 
-    window.viewRecipe = async (recipeId) => {
-        const docRef = doc(db, "profiles", auth.currentUser.uid, "recipes", recipeId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const recipe = docSnap.data();
-            document.getElementById('view-recipe-title').innerText = recipe.title;
-            document.getElementById('view-recipe-tags').innerText = `${recipe.category} • ${recipe.subCategory}`;
-            document.getElementById('view-recipe-instructions').innerText = recipe.instructions;
-            document.getElementById('view-recipe-ingredients').innerHTML = recipe.ingredients.map(ing => `<li>${ing}</li>`).join('');
-            document.getElementById('view-recipe-modal').style.display = 'flex';
-        }
-    };
+        window.viewRecipe = async (recipeId) => {
+            const docRef = doc(db, "profiles", auth.currentUser.uid, "recipes", recipeId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const recipe = docSnap.data();
+                document.getElementById('view-recipe-title').innerText = recipe.title;
+                document.getElementById('view-recipe-tags').innerText = `${recipe.category} • ${recipe.subCategory}`;
+                document.getElementById('view-recipe-instructions').innerText = recipe.instructions;
+                document.getElementById('view-recipe-ingredients').innerHTML = recipe.ingredients.map(ing => `<li>${ing}</li>`).join('');
+                document.getElementById('view-recipe-modal').style.display = 'flex';
+            }
+        };
 
-    window.closeViewModal = () => document.getElementById('view-recipe-modal').style.display = 'none';
+        window.closeViewModal = () => document.getElementById('view-recipe-modal').style.display = 'none';
 
-    // --- MENU PLAN LOGIC ---
-    window.openMealPicker = async (day) => {
-        selectedDay = day.toLowerCase();
-        document.getElementById('picker-day-title').innerText = `Assign Meal for ${day}`;
-        const list = document.getElementById('picker-recipe-list');
-        list.innerHTML = "Loading...";
-        const snap = await getDocs(collection(db, "profiles", auth.currentUser.uid, "recipes"));
-        if (snap.empty) {
-            list.innerHTML = "No recipes found.";
-        } else {
-            list.innerHTML = snap.docs.map(doc => `
+        // --- MENU PLAN LOGIC ---
+        window.openMealPicker = async (day) => {
+            selectedDay = day.toLowerCase();
+            document.getElementById('picker-day-title').innerText = `Assign Meal for ${day}`;
+            const list = document.getElementById('picker-recipe-list');
+            list.innerHTML = "Loading...";
+            const snap = await getDocs(collection(db, "profiles", auth.currentUser.uid, "recipes"));
+            if (snap.empty) {
+                list.innerHTML = "No recipes found.";
+            } else {
+                list.innerHTML = snap.docs.map(doc => `
                 <div onclick="assignMeal('${doc.data().title.replace(/'/g, "\\'")}')" style="padding:12px; border-bottom:1px solid #eee; cursor:pointer; font-weight:bold; color:var(--primary-green);">
                     ${doc.data().title}
                 </div>
             `).join('');
-        }
-        document.getElementById('meal-picker-modal').style.display = 'flex';
-    };
+            }
+            document.getElementById('meal-picker-modal').style.display = 'flex';
+        };
 
-    window.assignMeal = (title) => {
-        const slot = document.getElementById(`meal-${selectedDay}`);
-        slot.innerHTML = `<strong style="color:var(--primary-green);">${title}</strong>`;
-        document.getElementById('meal-picker-modal').style.display = 'none';
-    };
+        window.assignMeal = (title) => {
+            const slot = document.getElementById(`meal-${selectedDay}`);
+            slot.innerHTML = `<strong style="color:var(--primary-green);">${title}</strong>`;
+            document.getElementById('meal-picker-modal').style.display = 'none';
+        };
 
-    // UI Initialization
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    document.getElementById('weekly-grid').innerHTML = days.map(day => `
+        // UI Initialization
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        document.getElementById('weekly-grid').innerHTML = days.map(day => `
         <div class="day-card" style="background:white; padding:15px; border-radius:12px; border: 1px solid #eee;">
             <h4 style="margin:0 0 10px 0; color:var(--primary-green);">${day}</h4>
             <div id="meal-${day.toLowerCase()}" style="min-height: 40px; font-size:0.8rem; color:#888;">No meal planned</div>
@@ -199,26 +561,29 @@
         </div>
     `).join('');
 
-    function showToast(msg) {
-        const t = document.getElementById("toast");
-        t.innerText = msg;
-        t.className = "show";
-        setTimeout(() => { t.className = ""; }, 3000);
-    }
-
-    document.getElementById('logout-btn').onclick = () => signOut(auth);
-    document.getElementById('profile-upload').onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('cropper-image').src = ev.target.result;
-                document.getElementById('cropper-modal').style.display = 'flex';
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(document.getElementById('cropper-image'), { aspectRatio: 1, viewMode: 1 });
-            };
-            reader.readAsDataURL(file);
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.className = "show";
+            setTimeout(() => { t.className = ""; }, 3000);
         }
-    };
-    document.getElementById('crop-done-btn').onclick = () => document.getElementById('cropper-modal').style.display = 'none';
-</script>
+
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+        document.getElementById('profile-upload').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('cropper-image').src = ev.target.result;
+                    document.getElementById('cropper-modal').style.display = 'flex';
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(document.getElementById('cropper-image'), { aspectRatio: 1, viewMode: 1 });
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        document.getElementById('crop-done-btn').onclick = () => document.getElementById('cropper-modal').style.display = 'none';
+    </script>
+</body>
+
+</html>
