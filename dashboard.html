@@ -480,6 +480,17 @@
                     finally { btn.innerText = "Save to Cookbook"; btn.disabled = false; }
                 };
 
+                // --- 5. MENU PLAN LISTENER ---
+                onSnapshot(collection(db, "profiles", user.uid, "menu"), (snap) => {
+                    snap.docs.forEach(doc => {
+                        const dayId = doc.id; // e.g., "monday"
+                        const data = doc.data();
+                        const mealSlot = document.getElementById(`meal-${dayId}`);
+                        if (mealSlot) {
+                            mealSlot.innerHTML = `<strong style="color:var(--primary-green);">${data.meal}</strong>`;
+                        }
+                    });
+                });
             } else { window.location.href = "index.html"; }
         });
 
