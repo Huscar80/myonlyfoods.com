@@ -326,14 +326,29 @@
 
                     list.innerHTML = snap.docs.map(doc => {
                         const recipe = doc.data();
+                        const recipeId = doc.id; // We need this ID to delete the specific recipe
+
                         return `
-                        <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:10px;">
-                            <span style="font-size: 0.7rem; font-weight: bold; color: var(--accent-gold); text-transform: uppercase;">${recipe.category}</span>
-                            <h4 style="margin: 5px 0;">${recipe.title}</h4>
-                            <p style="font-size: 0.8rem; color: #666;">${recipe.ingredients.length} Ingredients</p>
-                            <button class="btn-action" style="padding: 5px 10px; font-size: 0.7rem;">View Recipe</button>
-                        </div>
-                    `;
+        <div class="stat-card" style="border-left: 5px solid var(--primary-green); padding: 15px; margin-bottom:15px; position:relative;">
+            <div style="font-size: 0.7rem; font-weight: bold; color: var(--primary-green); text-transform: uppercase; letter-spacing: 1px;">
+                ${recipe.category}
+            </div>
+            
+            <div style="font-size: 0.65rem; color: var(--accent-gold); font-weight: 600; margin-bottom: 5px;">
+                ${recipe.subCategory !== 'None' ? recipe.subCategory : ''}
+            </div>
+
+            <h4 style="margin: 5px 0; font-size: 1.1rem;">${recipe.title}</h4>
+            <p style="font-size: 0.8rem; color: #666; margin: 5px 0;">${recipe.ingredients.length} Ingredients</p>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-action" style="padding: 5px 10px; font-size: 0.7rem; flex: 1;">View</button>
+                <button onclick="deleteRecipe('${recipeId}')" style="padding: 5px 10px; font-size: 0.7rem; background: #ffbaba; color: #a00; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    Delete
+                </button>
+            </div>
+        </div>
+    `;
                     }).join('');
                 });
 
