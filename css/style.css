@@ -310,7 +310,30 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
     overflow: hidden; margin: 0 auto 16px; border: 3px solid var(--white); box-shadow: 0 0 0 1px var(--border);
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.profile-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+.profile-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.profile-head { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+.profile-head .avatar { width: 112px; height: 112px; margin: 0; flex: none; }
+.profile-head .who { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.profile-head h1 { margin: 0; font-family: var(--serif); font-size: 36px; font-weight: 600; color: var(--green); line-height: 1.15; }
+.profile-head .bio { margin: 6px 0 0; font-size: 16px; line-height: 1.6; color: var(--text-soft); max-width: 560px; white-space: pre-wrap; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.stat {
+    background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+    text-decoration: none; color: inherit; transition: box-shadow .15s;
+}
+.stat:hover { box-shadow: 0 6px 18px rgba(46, 90, 53, .08); color: inherit; }
+.stat .n { font-family: var(--serif); font-size: 34px; font-weight: 600; color: var(--green); line-height: 1.2; }
+.stat .l { font-size: 15px; color: var(--muted); }
+.taste { background: var(--cream); border-radius: 10px; padding: 14px 16px; }
+.taste .v { font-size: 17px; font-weight: 600; margin-top: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 6px 14px; border-radius: 999px; background: var(--green-tint); color: var(--green); font-weight: 600; font-size: 14px; }
+.acct-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    min-height: 60px; border-bottom: 1px solid #f0ebe1; padding: 6px 0;
+}
+.acct-row .k { font-size: 13px; color: var(--muted); }
+.acct-row .v { font-weight: 600; overflow-wrap: anywhere; }
 
 /* ---------- Toast ---------- */
 .toast {

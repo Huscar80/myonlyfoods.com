@@ -11,34 +11,37 @@
 <body>
 <header id="site-header"></header>
 
-<main class="page" style="max-width: 720px;">
-    <h1 class="page-title" style="margin-bottom: 24px;">Your chef profile</h1>
+<main class="page page-narrow stack" style="gap: 24px;">
 
-    <section class="card" id="view" style="text-align: center;">
-        <div class="avatar" id="avatar">?</div>
-        <h2 id="v-name" style="font-size: 28px; margin-bottom: 4px;">Loading…</h2>
-        <p class="subtle" id="v-location" style="margin: 0;"></p>
-        <div class="profile-facts" style="text-align: left;">
-            <div class="fact"><div class="k">Favorite food</div><div class="v" id="v-food">—</div></div>
-            <div class="fact"><div class="k">Favorite restaurant</div><div class="v" id="v-rest">—</div></div>
+    <!-- Profile summary -->
+    <section class="card profile-head" aria-label="Your profile" id="view">
+        <div class="avatar" id="avatar" aria-hidden="true">?</div>
+        <div class="who">
+            <h1 id="v-name">Loading…</h1>
+            <p class="subtle" id="v-sub" style="margin: 0;"></p>
+            <p class="bio" id="v-bio" hidden></p>
         </div>
         <button class="btn btn-primary" type="button" id="edit-btn">Edit profile</button>
     </section>
 
-    <form class="card stack" id="edit" hidden novalidate>
-        <h2 style="margin: 0;">Edit profile</h2>
-        <div id="error" class="alert" role="alert" hidden></div>
-        <div class="field">
-            <span class="label">Profile picture</span>
-            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                <div class="avatar" id="e-avatar" style="width: 80px; height: 80px; font-size: 30px; margin: 0;">?</div>
-                <button type="button" class="btn btn-secondary" id="choose-photo">Choose a photo</button>
-                <input type="file" id="photo" accept="image/*" hidden>
-            </div>
+    <!-- Edit form (opens in place) -->
+    <form class="card stack" id="edit" hidden novalidate style="border: 2px solid var(--green);" aria-labelledby="edit-h">
+        <h2 id="edit-h" style="margin: 0;">Edit profile</h2>
+        <div id="edit-error" class="alert" role="alert" hidden></div>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div class="avatar" id="e-avatar" aria-hidden="true" style="width: 72px; height: 72px; font-size: 28px; margin: 0;">?</div>
+            <button type="button" class="btn btn-secondary" id="choose-photo">Change photo</button>
+            <input type="file" id="photo" accept="image/*" hidden>
         </div>
-        <div class="field"><label for="name">Name</label><input class="input" id="name" type="text" autocomplete="name"></div>
-        <div class="field"><label for="location">Location</label><input class="input" id="location" type="text" placeholder="City, State"></div>
-        <div class="form-grid">
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <div class="field"><label for="name">Name</label><input class="input" id="name" type="text" autocomplete="name"></div>
+            <div class="field"><label for="location">Location</label><input class="input" id="location" type="text" placeholder="City, State"></div>
+        </div>
+        <div class="field">
+            <label for="bio">About you</label>
+            <textarea class="input" id="bio" rows="3" maxlength="300" placeholder="What do you love to cook? Who do you cook for?"></textarea>
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div class="field"><label for="favFood">Favorite food</label><input class="input" id="favFood" type="text"></div>
             <div class="field"><label for="favRestaurant">Favorite restaurant</label><input class="input" id="favRestaurant" type="text"></div>
         </div>
@@ -47,8 +50,48 @@
             <button type="button" class="btn btn-plain" id="cancel">Cancel</button>
         </div>
     </form>
+
+    <!-- Quick numbers -->
+    <div class="stats">
+        <a class="stat" href="dashboard.html"><div class="n" id="s-recipes">–</div><div class="l">Recipes in your book</div></a>
+        <a class="stat" href="dashboard.html"><div class="n" id="s-cols">–</div><div class="l">Collections</div></a>
+        <a class="stat" href="planner.html"><div class="n" id="s-plan">–</div><div class="l">Days planned this week</div></a>
+    </div>
+
+    <div class="split" style="gap: 24px;">
+        <section class="card main stack" aria-labelledby="taste-h" style="flex-basis: 420px;">
+            <h2 id="taste-h" style="margin: 0;">Your tastes</h2>
+            <div class="profile-facts">
+                <div class="taste"><div class="eyebrow">Favorite food</div><div class="v" id="v-food">—</div></div>
+                <div class="taste"><div class="eyebrow">Favorite restaurant</div><div class="v" id="v-rest">—</div></div>
+            </div>
+            <div>
+                <div class="eyebrow" style="margin-bottom: 8px;">Cuisines you cook most</div>
+                <div class="chips" id="cuisines"></div>
+                <p class="help" style="margin-top: 8px;" id="cuisine-help">Worked out from the recipes in your book.</p>
+            </div>
+        </section>
+
+        <section class="card side" aria-labelledby="acct-h" style="flex-basis: 340px;">
+            <h2 id="acct-h" style="margin: 0 0 6px;">Account</h2>
+            <div class="acct-row"><div><div class="k">Email</div><div class="v" id="a-email"></div></div></div>
+            <div class="acct-row">
+                <div><div class="k">Password</div><div class="v">••••••••</div></div>
+                <button class="btn btn-secondary" type="button" id="pw-btn" style="min-height: 40px; font-size: 14px;">Change</button>
+            </div>
+            <div class="acct-row">
+                <div><div class="k">Seller payouts</div><div class="v" style="color: var(--muted);">Not set up</div></div>
+                <span class="badge badge-sale" style="font-size: 11px; padding: 2px 8px;">Coming soon</span>
+            </div>
+            <div class="actions" style="margin-top: 18px;">
+                <button class="btn btn-plain" type="button" id="logout2">Log out</button>
+                <button class="btn btn-danger" type="button" id="delete-btn">Delete account</button>
+            </div>
+        </section>
+    </div>
 </main>
 
+<!-- Photo cropper -->
 <dialog id="cropper-dialog" aria-labelledby="crop-title" style="width: min(520px, calc(100% - 32px));">
     <div class="dialog-body">
         <h2 id="crop-title">Crop your photo</h2>
@@ -60,9 +103,28 @@
     </div>
 </dialog>
 
+<!-- Delete account -->
+<dialog id="delete-dialog" aria-labelledby="del-title">
+    <form class="dialog-body stack" id="delete-form" novalidate style="gap: 14px;">
+        <h2 id="del-title" style="margin: 0;">Delete your account?</h2>
+        <p style="margin: 0; line-height: 1.6;">This permanently deletes your profile, every recipe and photo in your book, and your meal plan. It can't be undone.</p>
+        <div id="del-error" class="alert" role="alert" hidden></div>
+        <div class="field">
+            <label for="del-pw">Enter your password to confirm</label>
+            <input class="input" type="password" id="del-pw" autocomplete="current-password">
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-danger" id="del-confirm" style="background: var(--danger); color: #fff; border-color: var(--danger);">Delete everything</button>
+            <button type="button" class="btn btn-plain" id="del-cancel">Keep my account</button>
+        </div>
+    </form>
+</dialog>
+
 <script type="module">
-    import { db, requireUser, renderHeader, esc, uploadImage, friendlyError, toast } from "./js/firebase.js";
-    import { doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe } from "./js/firebase.js";
+    import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     renderHeader("profile");
     const $ = (id) => document.getElementById(id);
@@ -70,42 +132,75 @@
     const profileRef = doc(db, "profiles", user.uid);
 
     let profile = {};
+    let recipes = [];
     let cropper = null;
     let croppedBlob = null;
 
+    $("a-email").textContent = user.email || "";
+
+    function displayName() { return profile.name || user.displayName || "Chef"; }
     function avatarHtml(url, name) {
-        if (url) return `<img src="${esc(url)}" alt="">`;
-        return esc((name || "?").charAt(0).toUpperCase());
+        return url ? `<img src="${esc(url)}" alt="">` : esc((name || "?").charAt(0).toUpperCase());
+    }
+    function memberSince() {
+        const t = user.metadata && user.metadata.creationTime;
+        if (!t) return "";
+        return "Cooking here since " + new Date(t).toLocaleDateString(undefined, { month: "long", year: "numeric" });
     }
 
+    // ---------- Profile ----------
     onSnapshot(profileRef, (snap) => {
         profile = snap.data() || {};
-        const name = profile.name || user.displayName || "Chef";
+        const name = displayName();
         $("v-name").textContent = name;
-        $("v-location").textContent = profile.location || "";
+        $("v-sub").textContent = [profile.location, memberSince()].filter(Boolean).join(" · ");
+        $("v-bio").textContent = profile.bio || "";
+        $("v-bio").hidden = !profile.bio;
         $("v-food").textContent = profile.favFood || "—";
         $("v-rest").textContent = profile.favRestaurant || "—";
         $("avatar").innerHTML = avatarHtml(profile.photoURL, name);
     }, (err) => toast(friendlyError(err)));
 
+    // ---------- Numbers & tastes ----------
+    onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
+        recipes = snap.docs.map((d) => normalizeRecipe(d.id, d.data()));
+        $("s-recipes").textContent = recipes.length;
+        $("s-cols").textContent = new Set(recipes.flatMap((r) => r.collections)).size;
+
+        const counts = {};
+        recipes.forEach((r) => { if (r.subCategory) counts[r.subCategory] = (counts[r.subCategory] || 0) + 1; });
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([c]) => c);
+        $("cuisines").innerHTML = top.map((c) => `<span class="chip">${esc(c)}</span>`).join("");
+        $("cuisine-help").textContent = top.length
+            ? "Worked out from the recipes in your book."
+            : "Pick a cuisine when you add recipes and your favorites will show up here.";
+    });
+
+    onSnapshot(collection(db, "profiles", user.uid, "menu"), (snap) => {
+        $("s-plan").textContent = `${snap.size} of 7`;
+    });
+
+    // ---------- Edit ----------
     function openEdit(open) {
         $("view").hidden = open;
         $("edit").hidden = !open;
         if (open) {
             $("name").value = profile.name || user.displayName || "";
             $("location").value = profile.location || "";
+            $("bio").value = profile.bio || "";
             $("favFood").value = profile.favFood || "";
             $("favRestaurant").value = profile.favRestaurant || "";
             $("e-avatar").innerHTML = avatarHtml(profile.photoURL, $("name").value);
             croppedBlob = null;
-            $("error").hidden = true;
+            $("edit-error").hidden = true;
             $("name").focus();
+        } else {
+            $("edit-btn").focus();
         }
     }
     $("edit-btn").addEventListener("click", () => openEdit(true));
     $("cancel").addEventListener("click", () => openEdit(false));
 
-    // ---------- Photo cropping ----------
     $("choose-photo").addEventListener("click", () => $("photo").click());
     $("photo").addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -120,16 +215,15 @@
         reader.readAsDataURL(file);
     });
     $("crop-done").addEventListener("click", () => {
-        const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
-        canvas.toBlob((blob) => {
+        cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob((blob) => {
             croppedBlob = blob;
             $("e-avatar").innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="">`;
             $("cropper-dialog").close();
+            $("photo").value = "";
         }, "image/jpeg", 0.85);
     });
     $("crop-cancel").addEventListener("click", () => { $("cropper-dialog").close(); $("photo").value = ""; });
 
-    // ---------- Save ----------
     $("edit").addEventListener("submit", async (e) => {
         e.preventDefault();
         const btn = $("save");
@@ -138,6 +232,7 @@
         const data = {
             name: $("name").value.trim(),
             location: $("location").value.trim(),
+            bio: $("bio").value.trim(),
             favFood: $("favFood").value.trim(),
             favRestaurant: $("favRestaurant").value.trim(),
             updatedAt: new Date(),
@@ -148,18 +243,72 @@
                     data.photoURL = await uploadImage(`profile_pics/${user.uid}`, croppedBlob);
                 } catch (photoErr) {
                     console.warn(photoErr);
-                    toast("Saved, but the photo couldn't upload (Firebase Storage needs the Blaze plan).");
+                    toast("Saved, but the photo couldn't upload.");
                 }
             }
             await setDoc(profileRef, data, { merge: true });
             openEdit(false);
             toast("Profile updated");
         } catch (err) {
-            $("error").textContent = friendlyError(err);
-            $("error").hidden = false;
+            $("edit-error").textContent = friendlyError(err);
+            $("edit-error").hidden = false;
         } finally {
             btn.disabled = false;
             btn.textContent = "Save changes";
+        }
+    });
+
+    // ---------- Account ----------
+    $("pw-btn").addEventListener("click", async () => {
+        try {
+            await sendPasswordResetEmail(auth, user.email);
+            toast(`We emailed a password link to ${user.email}`);
+        } catch (err) {
+            toast(friendlyError(err));
+        }
+    });
+    $("logout2").addEventListener("click", logout);
+
+    $("delete-btn").addEventListener("click", () => {
+        $("del-error").hidden = true;
+        $("del-pw").value = "";
+        $("delete-dialog").showModal();
+        $("del-pw").focus();
+    });
+    $("del-cancel").addEventListener("click", () => $("delete-dialog").close());
+
+    $("delete-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = $("del-confirm");
+        const pw = $("del-pw").value;
+        if (!pw) {
+            $("del-error").textContent = "Please enter your password.";
+            $("del-error").hidden = false;
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = "Deleting…";
+        try {
+            // Firebase asks for the password again before deleting an account.
+            await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+
+            const recipeSnap = await getDocs(collection(db, "profiles", user.uid, "recipes"));
+            for (const d of recipeSnap.docs) {
+                if (d.data().photoURL) await deleteObject(ref(storage, `recipe_photos/${user.uid}/${d.id}.jpg`)).catch(() => {});
+                await deleteDoc(d.ref);
+            }
+            const menuSnap = await getDocs(collection(db, "profiles", user.uid, "menu"));
+            for (const d of menuSnap.docs) await deleteDoc(d.ref);
+            if (profile.photoURL) await deleteObject(ref(storage, `profile_pics/${user.uid}`)).catch(() => {});
+            await deleteDoc(profileRef);
+
+            await deleteUser(user);
+            window.location.replace("index.html");
+        } catch (err) {
+            $("del-error").textContent = friendlyError(err);
+            $("del-error").hidden = false;
+            btn.disabled = false;
+            btn.textContent = "Delete everything";
         }
     });
 </script>
