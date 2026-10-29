@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=202610291026">
 </head>
 <body>
 <header id="site-header"></header>
@@ -69,7 +69,7 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy } from "./js/firebase.js";
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy } from "./js/firebase.js?v=202610291026";
     import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("home");
@@ -461,8 +461,8 @@
     }
 
     // ---------- Like / Not interested ----------
-    const heart = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
-    const nope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    const heart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+    const nope = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
     function feedbackButtons(fid, title) {
         const liked = prefs.liked.includes(fid);
