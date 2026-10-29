@@ -48,7 +48,9 @@ export function photoHtml(url, alt) {
     return `${icons.plate}<span>No photo yet</span>`;
 }
 
-export function toast(message) {
+// Shows a short message at the bottom of the screen. Pass { action, onAction }
+// to add a button, such as "Undo".
+export function toast(message, opts = {}) {
     let el = document.getElementById("toast");
     if (!el) {
         el = document.createElement("div");
@@ -58,9 +60,18 @@ export function toast(message) {
         document.body.appendChild(el);
     }
     el.textContent = message;
+    if (opts.action && opts.onAction) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "toast-action";
+        b.textContent = opts.action;
+        b.addEventListener("click", () => { el.classList.remove("show"); opts.onAction(); });
+        el.appendChild(b);
+    }
+    el.classList.toggle("has-action", !!opts.action);
     el.classList.add("show");
     clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove("show"), 2800);
+    el._t = setTimeout(() => el.classList.remove("show"), opts.action ? 6000 : 2800);
 }
 
 // Turn Firebase's error codes into plain English.

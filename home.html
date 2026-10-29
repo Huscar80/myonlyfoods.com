@@ -70,7 +70,7 @@
 
 <script type="module">
     import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy } from "./js/firebase.js";
-    import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("home");
     const $ = (id) => document.getElementById(id);
@@ -104,6 +104,9 @@
     let plan = {};
     let shopping = { checked: [], extra: [] };
     let community = null;      // null = still loading
+    // Your feedback on suggestions: liked and hidden ids ("pub:<id>" for other cooks'
+    // recipes, "mine:<id>" for your own), plus when own-book picks were snoozed.
+    let prefs = { liked: [], hidden: [], snoozed: {} };
     let page = 0;
     let loaded = { recipes: false, plan: false };
 
@@ -125,6 +128,13 @@
         const d = snap.data() || {};
         shopping = { checked: d.checked || [], extra: d.extra || [] };
         renderShopCount();
+    });
+
+    const prefsRef = doc(db, "profiles", uid, "prefs", "suggestions");
+    onSnapshot(prefsRef, (snap) => {
+        const d = snap.data() || {};
+        prefs = { liked: d.liked || [], hidden: d.hidden || [], snoozed: d.snoozed || {} };
+        renderSuggestions();
     });
 
     getDocs(query(collection(db, "publicRecipes"), orderBy("updatedAt", "desc"), limit(80)))
@@ -302,6 +312,22 @@
         return { cuisines: top(cuisines).slice(0, 3), categories: top(cats) };
     }
 
+    // How much your likes and "not interested" taps say you want a cuisine or meal type.
+    function affinity() {
+        const score = {};
+        const add = (key, n) => { if (key && key !== "None") score[key] = (score[key] || 0) + n; };
+        const lookup = (fid) => {
+            if (fid.startsWith("pub:")) {
+                const c = (community || []).find((x) => x.id === fid.slice(4));
+                return c ? c.data : null;
+            }
+            return recipes.find((r) => r.id === fid.slice(5)) || null;
+        };
+        prefs.liked.forEach((fid) => { const d = lookup(fid); if (d) { add(d.subCategory, 2); add(d.category, 0.5); } });
+        prefs.hidden.forEach((fid) => { const d = lookup(fid); if (d) { add(d.subCategory, -1.5); add(d.category, -0.25); } });
+        return (d) => (score[d.subCategory] || 0) + (score[d.category] || 0);
+    }
+
     // Recipes from your own book worth making again: not on this week's plan,
     // matching your favorite cuisines, and the ones you haven't planned in longest.
     function mySuggestions() {
@@ -313,12 +339,17 @@
             if (r && k <= todayKey && (!last[r.id] || k > last[r.id])) last[r.id] = k;
         });
         const daysAgo = (k) => Math.round((now - new Date(k + "T12:00:00")) / 86400000);
+        const fit = affinity();
+        // "Not now" on one of your own recipes hides it for two weeks.
+        const snoozed = (r) => prefs.snoozed[r.id] && daysAgo(prefs.snoozed[r.id]) < 14;
         return recipes
-            .filter((r) => !thisWeek.has(r.id))
+            .filter((r) => !thisWeek.has(r.id) && !snoozed(r))
             .map((r) => {
                 const ago = last[r.id] ? daysAgo(last[r.id]) : null;
                 let score = ago === null ? 40 : Math.min(ago, 60);
                 if (cuisines.includes(r.subCategory)) score += 15;
+                score += fit(r) * 5;
+                if (prefs.liked.includes("mine:" + r.id)) score += 20;
                 let why = ago === null ? "Not on your plan yet" : ago >= 14 ? `Last planned ${Math.round(ago / 7)} weeks ago` : `Planned ${ago} day${ago === 1 ? "" : "s"} ago`;
                 return { r, score, why };
             })
@@ -330,13 +361,16 @@
         if (!community) return null;
         const { cuisines, categories } = tastes();
         const have = new Set(recipes.map((r) => r.id));
+        const fit = affinity();
         return community
-            .filter(({ id, data }) => data.ownerId !== uid && !have.has(`saved_${id}`))
+            .filter(({ id, data }) => data.ownerId !== uid && !have.has(`saved_${id}`) && !prefs.hidden.includes("pub:" + id))
             .map(({ id, data }, i) => {
                 let score = -i * 0.01; // newer first when tied
                 let why = "New from the community";
                 if (data.subCategory && cuisines.includes(data.subCategory)) { score += 3; why = `Matches: ${data.subCategory}`; }
                 else if (categories.includes(data.category)) { score += 1; why = `More ${data.category.toLowerCase()} ideas`; }
+                score += fit(data);
+                if (prefs.liked.includes("pub:" + id)) { score += 5; why = "You liked this"; }
                 return { id, data, score, why };
             })
             .sort((a, b) => b.score - a.score)
@@ -364,13 +398,16 @@
                 const r = normalizeRecipe(id, data);
                 const meta = [totalTime(r), r.servings ? `Serves ${r.servings}` : ""].filter(Boolean).join(" · ");
                 return `
-                  <article class="sugg-card">
+                  <article class="sugg-card${prefs.liked.includes("pub:" + id) ? " liked" : ""}">
                     <a class="photo" href="recipe.html?pub=${encodeURIComponent(id)}" tabindex="-1" aria-hidden="true">${photoHtml(r.photoURL, "")}</a>
                     <div class="body">
                       <span class="why">${esc(why)}</span>
                       <h3><a href="recipe.html?pub=${encodeURIComponent(id)}">${esc(r.title)}</a></h3>
                       <span class="meta">by ${esc(data.ownerName || "a home cook")}${meta ? " · " + esc(meta) : ""}</span>
-                      <div class="foot"><button class="btn btn-primary btn-block" type="button" data-save="${esc(id)}">Save to my book</button></div>
+                      <div class="foot">
+                        <button class="btn btn-primary" type="button" data-save="${esc(id)}">Save to my book</button>
+                        ${feedbackButtons("pub:" + id, r.title)}
+                      </div>
                     </div>
                   </article>`;
             }).join("");
@@ -400,13 +437,16 @@
             mineEl.innerHTML = mine.map(({ r, why }) => {
                 const meta = [r.subCategory || r.category, totalTime(r)].filter(Boolean).join(" · ");
                 return `
-                  <article class="sugg-card">
+                  <article class="sugg-card${prefs.liked.includes("mine:" + r.id) ? " liked" : ""}">
                     <a class="photo" href="recipe.html?id=${encodeURIComponent(r.id)}" tabindex="-1" aria-hidden="true">${photoHtml(r.photoURL, "")}</a>
                     <div class="body">
                       <span class="why mine">${esc(why)}</span>
                       <h3><a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a></h3>
                       <span class="meta">${esc(meta)}</span>
-                      <div class="foot"><button class="btn btn-secondary btn-block" type="button" data-plan="${esc(r.id)}">Add to this week</button></div>
+                      <div class="foot">
+                        <button class="btn btn-secondary" type="button" data-plan="${esc(r.id)}">Add to this week</button>
+                        ${feedbackButtons("mine:" + r.id, r.title)}
+                      </div>
                     </div>
                   </article>`;
             }).join("");
@@ -415,6 +455,52 @@
                 if (r) addToWeek(r);
             }));
         }
+
+        document.querySelectorAll("[data-like]").forEach((b) => b.addEventListener("click", () => toggleLike(b.dataset.like)));
+        document.querySelectorAll("[data-hide]").forEach((b) => b.addEventListener("click", () => hide(b.dataset.hide, b.dataset.title)));
+    }
+
+    // ---------- Like / Not interested ----------
+    const heart = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+    const nope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+    function feedbackButtons(fid, title) {
+        const liked = prefs.liked.includes(fid);
+        const mine = fid.startsWith("mine:");
+        return `
+          <button class="feedback-btn like" type="button" data-like="${esc(fid)}" aria-pressed="${liked}" aria-label="${liked ? "Unlike" : "Like"} ${esc(title)}" title="${liked ? "Liked" : "Like"}">${heart}</button>
+          <button class="feedback-btn" type="button" data-hide="${esc(fid)}" data-title="${esc(title)}" aria-label="${mine ? "Not now" : "Not interested in"}: ${esc(title)}" title="${mine ? "Not now" : "Not interested"}">${nope}</button>`;
+    }
+
+    async function toggleLike(fid) {
+        const liked = prefs.liked.includes(fid);
+        prefs.liked = liked ? prefs.liked.filter((x) => x !== fid) : [...prefs.liked, fid];
+        renderSuggestions();
+        try {
+            await setDoc(prefsRef, { liked: liked ? arrayRemove(fid) : arrayUnion(fid) }, { merge: true });
+            if (!liked) toast("Liked. We'll show you more like this.");
+        } catch (err) { toast(friendlyError(err)); }
+    }
+
+    async function hide(fid, title) {
+        const mine = fid.startsWith("mine:");
+        const id = fid.replace(/^(pub|mine):/, "");
+        // Own recipes are snoozed for two weeks; other cooks' recipes are hidden for good.
+        const change = mine
+            ? { snoozed: { [id]: todayKey }, liked: arrayRemove(fid) }
+            : { hidden: arrayUnion(fid), liked: arrayRemove(fid) };
+        const undo = mine
+            ? { snoozed: { [id]: deleteField() } }
+            : { hidden: arrayRemove(fid) };
+        if (mine) prefs.snoozed = { ...prefs.snoozed, [id]: todayKey }; else prefs.hidden = [...prefs.hidden, fid];
+        renderSuggestions();
+        try {
+            await setDoc(prefsRef, change, { merge: true });
+            toast(mine ? `Okay, we'll hold off on "${title}" for a couple of weeks.` : `Got it. We'll show you fewer like "${title}".`, {
+                action: "Undo",
+                onAction: () => setDoc(prefsRef, undo, { merge: true }).catch((err) => toast(friendlyError(err))),
+            });
+        } catch (err) { toast(friendlyError(err)); }
     }
 </script>
 </body>

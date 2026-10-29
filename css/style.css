@@ -491,3 +491,23 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
 .sugg-card .meta { font-size: 14px; color: var(--muted); }
 .sugg-card .btn { margin-top: auto; }
 .sugg-card .foot { margin-top: auto; padding-top: 10px; }
+
+/* ---------- Toast action & suggestion feedback ---------- */
+.toast.has-action { pointer-events: auto; display: flex; align-items: center; gap: 14px; }
+.toast-action {
+    background: transparent; border: 1px solid rgba(255, 255, 255, .6); color: var(--white);
+    border-radius: 6px; min-height: 36px; padding: 0 12px; font: 700 14px var(--sans); cursor: pointer;
+}
+.toast-action:hover { background: rgba(255, 255, 255, .15); }
+.sugg-card .foot { display: flex; gap: 6px; align-items: center; }
+.sugg-card .foot .btn { flex: 1; min-width: 0; margin-top: 0; }
+.feedback-btn {
+    flex: none; width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--white); color: var(--muted); cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center;
+}
+.feedback-btn svg { width: 20px; height: 20px; }
+.feedback-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.feedback-btn.like[aria-pressed="true"] { background: var(--sale-bg); border-color: #efc9bb; color: var(--sale-text); }
+.feedback-btn.like[aria-pressed="true"] svg { fill: currentColor; }
+.sugg-card.liked { border-color: #efc9bb; }
