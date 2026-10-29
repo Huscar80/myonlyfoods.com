@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291026">
+    <link rel="stylesheet" href="css/style.css?v=202610291033">
 </head>
 <body>
 <header id="site-header"></header>
@@ -69,7 +69,7 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy } from "./js/firebase.js?v=202610291026";
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy, likeCount, setLike } from "./js/firebase.js?v=202610291033";
     import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("home");
@@ -107,6 +107,7 @@
     // Your feedback on suggestions: liked and hidden ids ("pub:<id>" for other cooks'
     // recipes, "mine:<id>" for your own), plus when own-book picks were snoozed.
     let prefs = { liked: [], hidden: [], snoozed: {} };
+    const likeCounts = {};       // shared recipe id -> number of likes
     let page = 0;
     let loaded = { recipes: false, plan: false };
 
@@ -406,7 +407,7 @@
                       <span class="meta">by ${esc(data.ownerName || "a home cook")}${meta ? " · " + esc(meta) : ""}</span>
                       <div class="foot">
                         <button class="btn btn-primary" type="button" data-save="${esc(id)}">Save to my book</button>
-                        ${feedbackButtons("pub:" + id, r.title)}
+                        ${feedbackButtons("pub:" + id, r.title, likeCounts[id])}
                       </div>
                     </div>
                   </article>`;
@@ -425,6 +426,8 @@
                 }
             }));
         }
+
+        if (comm && comm.length) loadLikeCounts(comm.map((c) => c.id));
 
         // Your own book
         const mine = mySuggestions();
@@ -464,22 +467,44 @@
     const heart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
     const nope = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
-    function feedbackButtons(fid, title) {
+    function feedbackButtons(fid, title, count) {
         const liked = prefs.liked.includes(fid);
         const mine = fid.startsWith("mine:");
+        // Shared recipes show how many people like them; your own recipes don't need a count.
+        const counter = mine ? "" : `<span class="like-count" data-count-for="${esc(fid.slice(4))}">${count ?? ""}</span>`;
         return `
-          <button class="feedback-btn like" type="button" data-like="${esc(fid)}" aria-pressed="${liked}" aria-label="${liked ? "Unlike" : "Like"} ${esc(title)}" title="${liked ? "Liked" : "Like"}">${heart}</button>
+          <button class="feedback-btn like${mine ? "" : " with-count"}" type="button" data-like="${esc(fid)}" aria-pressed="${liked}" aria-label="${liked ? "Unlike" : "Like"} ${esc(title)}" title="${liked ? "Liked" : "Like"}">${heart}${counter}</button>
           <button class="feedback-btn" type="button" data-hide="${esc(fid)}" data-title="${esc(title)}" aria-label="${mine ? "Not now" : "Not interested in"}: ${esc(title)}" title="${mine ? "Not now" : "Not interested"}">${nope}</button>`;
+    }
+
+    // Fetches like counts for shared recipes we haven't counted yet.
+    async function loadLikeCounts(ids) {
+        const missing = ids.filter((id) => likeCounts[id] === undefined);
+        await Promise.all(missing.map(async (id) => {
+            try { likeCounts[id] = await likeCount(id); } catch { likeCounts[id] = null; }
+            document.querySelectorAll(`[data-count-for="${CSS.escape(id)}"]`).forEach((el) => {
+                el.textContent = likeCounts[id] ?? "";
+            });
+        }));
     }
 
     async function toggleLike(fid) {
         const liked = prefs.liked.includes(fid);
+        const isPub = fid.startsWith("pub:");
+        const pubId = fid.slice(4);
         prefs.liked = liked ? prefs.liked.filter((x) => x !== fid) : [...prefs.liked, fid];
+        if (isPub && typeof likeCounts[pubId] === "number") likeCounts[pubId] = Math.max(0, likeCounts[pubId] + (liked ? -1 : 1));
         renderSuggestions();
         try {
-            await setDoc(prefsRef, { liked: liked ? arrayRemove(fid) : arrayUnion(fid) }, { merge: true });
+            if (isPub) await setLike(user, pubId, !liked);
+            else await setDoc(prefsRef, { liked: liked ? arrayRemove(fid) : arrayUnion(fid) }, { merge: true });
             if (!liked) toast("Liked. We'll show you more like this.");
-        } catch (err) { toast(friendlyError(err)); }
+        } catch (err) {
+            if (isPub && typeof likeCounts[pubId] === "number") likeCounts[pubId] = Math.max(0, likeCounts[pubId] + (liked ? 1 : -1));
+            prefs.liked = liked ? [...prefs.liked, fid] : prefs.liked.filter((x) => x !== fid);
+            renderSuggestions();
+            toast(friendlyError(err));
+        }
     }
 
     async function hide(fid, title) {
@@ -492,6 +517,7 @@
         const undo = mine
             ? { snoozed: { [id]: deleteField() } }
             : { hidden: arrayRemove(fid) };
+        if (!mine && prefs.liked.includes(fid)) setLike(user, id, false).catch(() => {});
         if (mine) prefs.snoozed = { ...prefs.snoozed, [id]: todayKey }; else prefs.hidden = [...prefs.hidden, fid];
         renderSuggestions();
         try {

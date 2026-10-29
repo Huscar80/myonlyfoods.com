@@ -1,7 +1,7 @@
 // myonlyfoods — shared Firebase setup and page helpers
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getCountFromServer, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // These values are safe to have in public code. Your data is protected by the
@@ -231,6 +231,31 @@ export async function saveCopy(user, pubId, pub) {
     }, { merge: true });
     return copyId;
 }
+
+// ---------- Likes ----------
+// Each like on a shared recipe is one small record named after the person who
+// liked it, so nobody can like the same recipe twice. The count is just how
+// many of those records exist.
+export async function likeCount(pubId) {
+    const snap = await getCountFromServer(collection(db, "publicRecipes", pubId, "likes"));
+    return snap.data().count;
+}
+
+export async function isLiked(user, pubId) {
+    const snap = await getDoc(doc(db, "publicRecipes", pubId, "likes", user.uid));
+    return snap.exists();
+}
+
+// Likes (or unlikes) a shared recipe, and remembers it for your suggestions.
+export async function setLike(user, pubId, on) {
+    const likeRef = doc(db, "publicRecipes", pubId, "likes", user.uid);
+    const prefsRef = doc(db, "profiles", user.uid, "prefs", "suggestions");
+    if (on) await setDoc(likeRef, { createdAt: new Date() });
+    else await deleteDoc(likeRef);
+    await setDoc(prefsRef, { liked: on ? arrayUnion("pub:" + pubId) : arrayRemove("pub:" + pubId) }, { merge: true });
+}
+
+export const heartIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
 
 export function unpublishRecipe(recipeId) {
     return deleteDoc(doc(db, "publicRecipes", recipeId)).catch(() => {});

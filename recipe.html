@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291026">
+    <link rel="stylesheet" href="css/style.css?v=202610291033">
 </head>
 <body>
 <header id="site-header"></header>
@@ -15,7 +15,7 @@
 </main>
 
 <script type="module">
-    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast, unpublishRecipe, saveCopy } from "./js/firebase.js?v=202610291026";
+    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast, unpublishRecipe, saveCopy, likeCount, isLiked, setLike, heartIcon } from "./js/firebase.js?v=202610291033";
     import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -63,9 +63,11 @@
             <p class="help" style="font-size: 15px;">Shared by <strong>${esc(owner)}</strong></p>
             <div class="actions">
               <button class="btn btn-primary" type="button" id="save-btn">${icons.plus}Save to my book</button>
+              <button class="btn btn-secondary" type="button" id="like-btn" aria-pressed="false">${heartIcon}<span id="like-label">Like</span><span class="like-count" id="like-count"></span></button>
               <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
             </div>`;
         render(r, actions);
+        wireLike(sharedId);
         document.getElementById("print-btn").addEventListener("click", () => window.print());
         document.getElementById("save-btn").addEventListener("click", async (e) => {
             const btn = e.currentTarget;
@@ -81,11 +83,38 @@
         });
     }
 
+    // Like button with a live count on someone else's shared recipe.
+    async function wireLike(sharedId) {
+        const btn = document.getElementById("like-btn");
+        let liked = false, count = null;
+        const paint = () => {
+            btn.setAttribute("aria-pressed", String(liked));
+            btn.classList.toggle("is-liked", liked);
+            document.getElementById("like-label").textContent = liked ? "Liked" : "Like";
+            document.getElementById("like-count").textContent = count === null ? "" : `· ${count}`;
+        };
+        try { [liked, count] = await Promise.all([isLiked(user, sharedId), likeCount(sharedId)]); } catch { /* show without a count */ }
+        paint();
+        btn.addEventListener("click", async () => {
+            const was = liked;
+            liked = !was;
+            if (count !== null) count = Math.max(0, count + (liked ? 1 : -1));
+            paint();
+            try { await setLike(user, sharedId, liked); }
+            catch (err) {
+                liked = was;
+                if (count !== null) count = Math.max(0, count + (liked ? 1 : -1));
+                paint();
+                toast(friendlyError(err));
+            }
+        });
+    }
+
     function show(r) {
         const credit = r.savedFrom ? `<p class="help" style="font-size: 15px;">Saved from <strong>${esc(r.savedFrom.ownerName || "another cook")}</strong>'s book</p>` : "";
         const actions = `
             ${credit}
-            <div>${visibilityBadge(r)}</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">${visibilityBadge(r)}<span id="own-likes"></span></div>
             <div class="actions">
               <a class="btn btn-primary" href="editor.html?id=${encodeURIComponent(r.id)}">${icons.edit}Edit recipe</a>
               <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
@@ -93,6 +122,12 @@
             </div>`;
         render(r, actions);
         wireOwnActions(r);
+        if (r.visibility === "public") {
+            likeCount(r.id).then((n) => {
+                if (n > 0) document.getElementById("own-likes").innerHTML =
+                    `<span class="like-pill">${heartIcon}${n} ${n === 1 ? "person likes" : "people like"} this</span>`;
+            }).catch(() => {});
+        }
     }
 
     function render(r, actions) {
