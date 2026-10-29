@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291048">
+    <link rel="stylesheet" href="css/style.css?v=202610291057">
 </head>
 <body>
 <header id="site-header"></header>
@@ -20,6 +20,29 @@
         </div>
 
         <div id="error" class="alert" role="alert" hidden style="margin-bottom: 20px;"></div>
+
+        <section class="scan-banner" id="scan-banner" aria-labelledby="scan-h" hidden>
+            <div class="scan-icon" aria-hidden="true"></div>
+            <div style="flex: 1 1 240px; min-width: 0;">
+                <h2 id="scan-h">Have a recipe card?</h2>
+                <p>Snap a photo and we'll fill in what we can read. Works best on typed or printed cards with good light.</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="scan-btn">Scan a recipe card</button>
+            <input type="file" id="scan-file" accept="image/*" hidden>
+        </section>
+
+        <div class="scan-result card" id="scan-result" hidden>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <h2 style="margin: 0;">Text from your card</h2>
+                <button type="button" class="btn btn-plain" id="scan-hide" style="min-height: 40px;">Hide</button>
+            </div>
+            <p class="help" id="scan-summary" style="margin: 8px 0 12px;"></p>
+            <details>
+                <summary>Show everything we read</summary>
+                <label for="scan-text" class="sr-only">Text read from the card</label>
+                <textarea class="input" id="scan-text" rows="8" readonly style="margin-top: 10px; font-size: 14px;"></textarea>
+            </details>
+        </div>
 
         <div class="split">
             <div class="main stack" style="gap: 24px;">
@@ -113,9 +136,18 @@
     </form>
 </main>
 
+<dialog id="scan-dialog" aria-labelledby="scan-d-title">
+    <div class="dialog-body" style="text-align: center;">
+        <h2 id="scan-d-title">Reading your card…</h2>
+        <p class="help" id="scan-d-status" style="margin-bottom: 14px;">Getting the reader ready. The first scan takes a little longer.</p>
+        <progress id="scan-progress" max="100" value="0" style="width: 100%; height: 12px; accent-color: var(--green);"></progress>
+    </div>
+</dialog>
+
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202610291048";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202610291057";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { readCard, parseRecipeText } from "./js/scan.js?v=202610291057";
 
     renderHeader("recipes");
     const $ = (id) => document.getElementById(id);
@@ -270,6 +302,65 @@
     $("collections").innerHTML = allCollections.length
         ? allCollections.map((c, i) => `<label class="check"><input type="checkbox" value="${esc(c)}" ${r.collections.includes(c) ? "checked" : ""}>${esc(c)}</label>`).join("")
         : `<p class="help">No collections yet.</p>`;
+
+    // ---------- Scan a recipe card ----------
+    if (!existing) $("scan-banner").hidden = false;
+    $("scan-banner").querySelector(".scan-icon").innerHTML = icons.camera;
+    $("scan-btn").addEventListener("click", () => $("scan-file").click());
+    $("scan-hide").addEventListener("click", () => { $("scan-result").hidden = true; });
+
+    const isBlank = (container, sel) => [...container.querySelectorAll(sel)].every((el) => !el.value.trim());
+
+    $("scan-file").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        e.target.value = "";
+        if (!file) return;
+        const dlg = $("scan-dialog");
+        $("scan-progress").value = 0;
+        $("scan-d-status").textContent = "Getting the reader ready. The first scan takes a little longer.";
+        dlg.showModal();
+        let text = "";
+        try {
+            text = await readCard(file, (p) => {
+                $("scan-d-status").textContent = "Reading the text…";
+                $("scan-progress").value = Math.round(p * 100);
+            });
+        } catch (err) {
+            dlg.close();
+            $("error").textContent = err.message || "Sorry, the card couldn't be read.";
+            $("error").hidden = false;
+            return;
+        }
+        dlg.close();
+
+        const found = parseRecipeText(text);
+        const filled = [];
+        if (found.title && !$("title").value.trim()) { $("title").value = found.title; filled.push("the name"); }
+        if (found.servings && !$("servings").value.trim()) { $("servings").value = found.servings; filled.push("servings"); }
+        if (found.prepTime && !$("prepTime").value.trim()) $("prepTime").value = found.prepTime;
+        if (found.cookTime && !$("cookTime").value.trim()) $("cookTime").value = found.cookTime;
+        if (found.ingredients.length) {
+            if (isBlank($("ingredients"), "input")) $("ingredients").innerHTML = "";
+            found.ingredients.forEach((i) => addIngredient(i));
+            filled.push(`${found.ingredients.length} ingredient${found.ingredients.length === 1 ? "" : "s"}`);
+        }
+        if (found.steps.length) {
+            if (isBlank($("steps"), "textarea")) $("steps").innerHTML = "";
+            found.steps.forEach((st) => addStep(st));
+            filled.push(`${found.steps.length} step${found.steps.length === 1 ? "" : "s"}`);
+        }
+        // Keep the card itself as the photo, so the original is always there to check.
+        if (!photoFile && !photoURL) { pickFile(file); filled.push("the card as the photo"); }
+
+        $("scan-text").value = text.trim();
+        $("scan-summary").textContent = text.trim()
+            ? (filled.length
+                ? `We filled in ${filled.join(", ")}. Please check everything below, since the reader can mix things up. Anything it missed is in the full text.`
+                : "We read some text but couldn't tell what's what. Copy what you need from the full text below.")
+            : "We couldn't find any text in that photo. Try again in brighter light, with the card filling the frame.";
+        $("scan-result").hidden = false;
+        $("scan-result").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
     // ---------- Save ----------
     $("form").addEventListener("submit", async (e) => {
