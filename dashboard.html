@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Recipe Book | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291033">
+    <link rel="stylesheet" href="css/style.css?v=202610291048">
 </head>
 <body>
 <header id="site-header"></header>
@@ -39,13 +39,14 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, visibilityBadge, friendlyError } from "./js/firebase.js?v=202610291033";
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, visibilityBadge, friendlyError, likeCount, likePill } from "./js/firebase.js?v=202610291048";
     import { collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("recipes");
     document.getElementById("search-icon").outerHTML = icons.search;
 
     const state = { recipes: [], category: "All", collection: "", query: "" };
+    const likes = {};   // recipe id -> like count, for your Public recipes
     const user = await requireUser();
 
     // Greet by name if we have one.
@@ -59,6 +60,10 @@
             .map((d) => normalizeRecipe(d.id, d.data()))
             .sort((a, b) => a.title.localeCompare(b.title));
         render();
+        // Fetch like counts for Public recipes, then redraw once they're in.
+        const pub = state.recipes.filter((r) => r.visibility === "public" && likes[r.id] === undefined);
+        if (pub.length) Promise.all(pub.map((r) => likeCount(r.id).then((n) => { likes[r.id] = n; }).catch(() => { likes[r.id] = 0; })))
+            .then(renderList);
     }, (err) => {
         document.getElementById("list").innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
         document.getElementById("summary").textContent = "";
@@ -135,7 +140,7 @@
                 <div class="body">
                   <span class="eyebrow">${esc(r.category)}${sub}</span>
                   <h3>${esc(r.title)}</h3>
-                  <div class="meta"><span>${esc(meta)}</span>${visibilityBadge(r)}</div>
+                  <div class="meta"><span>${esc(meta)}</span><span style="display:flex; gap:6px; align-items:center;">${r.visibility === "public" && likes[r.id] ? likePill(likes[r.id], true) : ""}${visibilityBadge(r)}</span></div>
                 </div>
               </a>`;
         }).join("");

@@ -521,3 +521,11 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
 .like-pill svg { width: 16px; height: 16px; fill: currentColor; }
 .btn.is-liked { background: var(--sale-bg); border-color: #efc9bb; color: var(--sale-text); }
 .btn.is-liked svg { fill: currentColor; }
+.like-pill.small { font-size: 12px; padding: 3px 8px; gap: 4px; }
+.like-pill.small svg { width: 13px; height: 13px; }
+.likes-news {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 14px;
+    background: var(--sale-bg); color: var(--sale-text); border-radius: 999px; text-decoration: none; font-size: 15px;
+}
+.likes-news:hover { color: var(--sale-text); background: #f7dcd1; }
+.likes-news svg { width: 18px; height: 18px; fill: currentColor; flex: none; }

@@ -1,7 +1,7 @@
 // myonlyfoods — shared Firebase setup and page helpers
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getCountFromServer, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getCountFromServer, arrayUnion, arrayRemove, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // These values are safe to have in public code. Your data is protected by the
@@ -239,6 +239,17 @@ export async function saveCopy(user, pubId, pub) {
 export async function likeCount(pubId) {
     const snap = await getCountFromServer(collection(db, "publicRecipes", pubId, "likes"));
     return snap.data().count;
+}
+
+// How many likes a shared recipe got on or after a date.
+export async function likeCountSince(pubId, since) {
+    const q = query(collection(db, "publicRecipes", pubId, "likes"), where("createdAt", ">=", since));
+    const snap = await getCountFromServer(q);
+    return snap.data().count;
+}
+
+export function likePill(n, small) {
+    return `<span class="like-pill${small ? " small" : ""}" title="${n} ${n === 1 ? "like" : "likes"}">${heartIcon}${n}</span>`;
 }
 
 export async function isLiked(user, pubId) {

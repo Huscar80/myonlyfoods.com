@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291033">
+    <link rel="stylesheet" href="css/style.css?v=202610291048">
 </head>
 <body>
 <header id="site-header"></header>
@@ -13,6 +13,7 @@
     <div>
         <h1 class="page-title" id="greeting">Welcome back</h1>
         <p class="subtle" id="today"></p>
+        <a class="likes-news" id="likes-news" href="dashboard.html" hidden></a>
     </div>
 
     <!-- Tonight + this week -->
@@ -69,7 +70,7 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy, likeCount, setLike } from "./js/firebase.js?v=202610291033";
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy, likeCount, setLike, likeCountSince, heartIcon } from "./js/firebase.js?v=202610291048";
     import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("home");
@@ -114,6 +115,7 @@
     onSnapshot(collection(db, "profiles", uid, "recipes"), (snap) => {
         recipes = snap.docs.map((d) => normalizeRecipe(d.id, d.data())).sort((a, b) => a.title.localeCompare(b.title));
         loaded.recipes = true;
+        updateLikesNews();
         if (page >= recipes.length) page = 0;
         renderAll();
     }, (err) => toast(friendlyError(err)));
@@ -141,6 +143,31 @@
     getDocs(query(collection(db, "publicRecipes"), orderBy("updatedAt", "desc"), limit(80)))
         .then((snap) => { community = snap.docs.map((d) => ({ id: d.id, data: d.data() })); renderSuggestions(); })
         .catch((err) => { console.warn("Couldn't load shared recipes:", err); community = []; renderSuggestions(); });
+
+    // "Your shared recipes got 4 new likes this week" — only shown when there's something to say.
+    let likesNewsFor = "";
+    async function updateLikesNews() {
+        const pub = recipes.filter((r) => r.visibility === "public");
+        const key = pub.map((r) => r.id).join(",");
+        if (key === likesNewsFor) return;
+        likesNewsFor = key;
+        const el = $("likes-news");
+        if (!pub.length) { el.hidden = true; return; }
+        try {
+            const [fresh, total] = await Promise.all([
+                Promise.all(pub.map((r) => likeCountSince(r.id, monday))),
+                Promise.all(pub.map((r) => likeCount(r.id))),
+            ]);
+            const n = fresh.reduce((a, b) => a + b, 0);
+            const t = total.reduce((a, b) => a + b, 0);
+            if (n > 0) el.innerHTML = `${heartIcon}<span>Your shared recipes got <strong>${n} new ${n === 1 ? "like" : "likes"}</strong> this week</span>`;
+            else if (t > 0) el.innerHTML = `${heartIcon}<span>Your shared recipes have <strong>${t} ${t === 1 ? "like" : "likes"}</strong> so far</span>`;
+            el.hidden = !(n > 0 || t > 0);
+        } catch (err) {
+            console.warn("Couldn't count likes:", err);
+            el.hidden = true;
+        }
+    }
 
     const recipeFor = (e) => e && e.type !== "quick" ? (recipes.find((r) => r.id === e.recipeId) || recipes.find((r) => r.title === e.meal)) : null;
 
