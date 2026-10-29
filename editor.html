@@ -27,7 +27,12 @@
                 <h2 id="scan-h">Have a recipe card?</h2>
                 <p>Snap a photo and we'll fill in what we can read. Works best on typed or printed cards with good light.</p>
             </div>
-            <button type="button" class="btn btn-primary" id="scan-btn">Scan a recipe card</button>
+            <div class="actions">
+                <button type="button" class="btn btn-primary" id="scan-camera">Take a photo</button>
+                <button type="button" class="btn btn-secondary" id="scan-pick">Choose from photos</button>
+            </div>
+            <!-- "capture" asks the phone to open its camera; the second one opens the photo library. -->
+            <input type="file" id="scan-file-camera" accept="image/*" capture="environment" hidden>
             <input type="file" id="scan-file" accept="image/*" hidden>
         </section>
 
@@ -306,12 +311,13 @@
     // ---------- Scan a recipe card ----------
     if (!existing) $("scan-banner").hidden = false;
     $("scan-banner").querySelector(".scan-icon").innerHTML = icons.camera;
-    $("scan-btn").addEventListener("click", () => $("scan-file").click());
+    $("scan-camera").addEventListener("click", () => $("scan-file-camera").click());
+    $("scan-pick").addEventListener("click", () => $("scan-file").click());
     $("scan-hide").addEventListener("click", () => { $("scan-result").hidden = true; });
 
     const isBlank = (container, sel) => [...container.querySelectorAll(sel)].every((el) => !el.value.trim());
 
-    $("scan-file").addEventListener("change", async (e) => {
+    const onScanFile = async (e) => {
         const file = e.target.files[0];
         e.target.value = "";
         if (!file) return;
@@ -360,7 +366,9 @@
             : "We couldn't find any text in that photo. Try again in brighter light, with the card filling the frame.";
         $("scan-result").hidden = false;
         $("scan-result").scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    };
+    $("scan-file-camera").addEventListener("change", onScanFile);
+    $("scan-file").addEventListener("change", onScanFile);
 
     // ---------- Save ----------
     $("form").addEventListener("submit", async (e) => {
