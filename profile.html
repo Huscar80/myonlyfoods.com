@@ -121,7 +121,7 @@
 </dialog>
 
 <script type="module">
-    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe } from "./js/firebase.js";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js";
     import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -303,10 +303,13 @@
             const recipeSnap = await getDocs(collection(db, "profiles", user.uid, "recipes"));
             for (const d of recipeSnap.docs) {
                 if (d.data().photoURL) await deleteObject(ref(storage, `recipe_photos/${user.uid}/${d.id}.jpg`)).catch(() => {});
+                if (d.data().visibility === "public") await unpublishRecipe(d.id);
                 await deleteDoc(d.ref);
             }
-            const menuSnap = await getDocs(collection(db, "profiles", user.uid, "menu"));
-            for (const d of menuSnap.docs) await deleteDoc(d.ref);
+            for (const sub of ["menu", "shopping"]) {
+                const s = await getDocs(collection(db, "profiles", user.uid, sub));
+                for (const d of s.docs) await deleteDoc(d.ref);
+            }
             if (profile.photoURL) await deleteObject(ref(storage, `profile_pics/${user.uid}`)).catch(() => {});
             await deleteDoc(profileRef);
 

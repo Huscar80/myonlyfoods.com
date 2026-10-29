@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page home">
+    <div>
+        <h1 class="page-title" id="greeting">Welcome back</h1>
+        <p class="subtle" id="today"></p>
+    </div>
+
+    <!-- Tonight + this week -->
+    <div class="home-row">
+        <section class="tonight" id="tonight" aria-labelledby="tonight-h">
+            <div class="body"><p class="loading" id="tonight-h">Loading…</p></div>
+        </section>
+
+        <section class="card week-card" aria-labelledby="week-h">
+            <div class="section-head" style="margin: 0; align-items: baseline;">
+                <h2 id="week-h" style="font-size: 22px;">This week</h2>
+                <a href="planner.html">Open meal plan</a>
+            </div>
+            <ul class="week-list" id="week"></ul>
+            <a class="shop-link" href="planner.html#shopping"><span>Shopping list</span><span id="shop-count">—</span></a>
+        </section>
+    </div>
+
+    <!-- Flip book -->
+    <section aria-labelledby="book-h">
+        <div class="section-head">
+            <h2 id="book-h">Flip through your book</h2>
+            <a href="dashboard.html">See all recipes</a>
+        </div>
+        <div class="book-shelf" id="shelf">
+            <div class="book" id="book" aria-live="polite"><div class="page"><p class="loading">Loading…</p></div></div>
+            <div class="book-controls" id="book-controls" hidden>
+                <button class="page-btn" type="button" id="prev-page" aria-label="Previous page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span class="count" id="page-count"></span>
+                <button class="page-btn" type="button" id="next-page" aria-label="Next page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Suggestions -->
+    <section aria-labelledby="sugg-h">
+        <div class="section-head">
+            <div>
+                <h2 id="sugg-h">Picked for you</h2>
+                <p class="subtle" id="sugg-why" style="margin-top: 4px;"></p>
+            </div>
+        </div>
+
+        <h3 class="eyebrow" style="margin: 0 0 10px;">From other cooks</h3>
+        <div class="recipe-grid" id="sugg-community"><p class="loading">Loading…</p></div>
+
+        <h3 class="eyebrow" style="margin: 28px 0 10px;">From your own book</h3>
+        <div class="recipe-grid" id="sugg-mine"></div>
+    </section>
+</main>
+
+<script type="module">
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, friendlyError, toast, saveCopy } from "./js/firebase.js";
+    import { collection, doc, onSnapshot, getDoc, getDocs, setDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    renderHeader("home");
+    const $ = (id) => document.getElementById(id);
+    const user = await requireUser();
+    const uid = user.uid;
+
+    const potIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 7c0-1.5 1-2 1-3M13 7c0-1.5 1-2 1-3"/></svg>';
+
+    // ---------- Dates ----------
+    const pad = (n) => String(n).padStart(2, "0");
+    const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const now = new Date();
+    const todayKey = dayKey(now);
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    const week = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+        return { key: dayKey(d), date: d, short: d.toLocaleDateString(undefined, { weekday: "short" }), name: d.toLocaleDateString(undefined, { weekday: "long" }) };
+    });
+
+    $("today").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    const hour = now.getHours();
+    const hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    $("greeting").textContent = hello;
+    getDoc(doc(db, "profiles", uid)).then((s) => {
+        const name = (s.data() && s.data().name) || user.displayName;
+        if (name) $("greeting").textContent = `${hello}, ${name.split(" ")[0]}`;
+    }).catch(() => {});
+
+    // ---------- State ----------
+    let recipes = [];
+    let plan = {};
+    let shopping = { checked: [], extra: [] };
+    let community = null;      // null = still loading
+    let page = 0;
+    let loaded = { recipes: false, plan: false };
+
+    onSnapshot(collection(db, "profiles", uid, "recipes"), (snap) => {
+        recipes = snap.docs.map((d) => normalizeRecipe(d.id, d.data())).sort((a, b) => a.title.localeCompare(b.title));
+        loaded.recipes = true;
+        if (page >= recipes.length) page = 0;
+        renderAll();
+    }, (err) => toast(friendlyError(err)));
+
+    onSnapshot(collection(db, "profiles", uid, "menu"), (snap) => {
+        plan = {};
+        snap.docs.forEach((d) => { if (/^\d{4}-\d{2}-\d{2}$/.test(d.id)) plan[d.id] = d.data(); });
+        loaded.plan = true;
+        renderAll();
+    });
+
+    onSnapshot(doc(db, "profiles", uid, "shopping", week[0].key), (snap) => {
+        const d = snap.data() || {};
+        shopping = { checked: d.checked || [], extra: d.extra || [] };
+        renderShopCount();
+    });
+
+    getDocs(query(collection(db, "publicRecipes"), orderBy("updatedAt", "desc"), limit(80)))
+        .then((snap) => { community = snap.docs.map((d) => ({ id: d.id, data: d.data() })); renderSuggestions(); })
+        .catch((err) => { console.warn("Couldn't load shared recipes:", err); community = []; renderSuggestions(); });
+
+    const recipeFor = (e) => e && e.type !== "quick" ? (recipes.find((r) => r.id === e.recipeId) || recipes.find((r) => r.title === e.meal)) : null;
+
+    function renderAll() {
+        if (!loaded.recipes || !loaded.plan) return;
+        renderTonight();
+        renderWeek();
+        renderShopCount();
+        renderBook();
+        renderSuggestions();
+    }
+
+    // ---------- Planning helper ----------
+    // Puts a recipe on the next open night this week, starting today.
+    async function addToWeek(r) {
+        const open = week.filter((d) => d.key >= todayKey && !plan[d.key]);
+        if (!open.length) { toast("This week is full. Open the meal plan to swap something."); return; }
+        const day = open[0];
+        try {
+            await setDoc(doc(db, "profiles", uid, "menu", day.key), { type: "recipe", recipeId: r.id, meal: r.title, updatedAt: new Date() });
+            toast(`Added to ${day.key === todayKey ? "tonight" : day.name}`);
+        } catch (err) { toast(friendlyError(err)); }
+    }
+
+    // ---------- Tonight ----------
+    function renderTonight() {
+        const e = plan[todayKey];
+        const r = recipeFor(e);
+        const el = $("tonight");
+        if (r) {
+            el.innerHTML = `
+              <div class="photo">${photoHtml(r.photoURL, r.title)}</div>
+              <div class="body">
+                <div class="eyebrow">Tonight's dinner</div>
+                <h2 id="tonight-h"><a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a></h2>
+                <p class="subtle" style="margin: 0;">${[r.subCategory || r.category, totalTime(r), r.servings ? `Serves ${r.servings}` : ""].filter(Boolean).map(esc).join(" · ")}</p>
+                <div class="actions" style="margin-top: 6px;">
+                  <a class="btn btn-primary" href="recipe.html?id=${encodeURIComponent(r.id)}">Open recipe</a>
+                  <a class="btn btn-secondary" href="planner.html">Change</a>
+                </div>
+              </div>`;
+        } else if (e) {
+            el.innerHTML = `
+              <div class="photo" style="background: #fbf3e4; color: #6a4a12;">${potIcon}</div>
+              <div class="body">
+                <div class="eyebrow">Tonight's dinner</div>
+                <h2 id="tonight-h">${esc(e.meal || "Planned")}</h2>
+                <p class="subtle" style="margin: 0;">No recipe needed tonight.</p>
+                <div class="actions" style="margin-top: 6px;"><a class="btn btn-secondary" href="planner.html">Change</a></div>
+              </div>`;
+        } else {
+            const idea = mySuggestions()[0];
+            el.innerHTML = `
+              <div class="photo">${idea ? photoHtml(idea.r.photoURL, idea.r.title) : `${icons.plate}<span>Nothing planned</span>`}</div>
+              <div class="body">
+                <div class="eyebrow">Tonight's dinner</div>
+                <h2 id="tonight-h">Nothing planned yet</h2>
+                ${idea ? `<p style="margin: 0; color: var(--text-soft);">How about <a href="recipe.html?id=${encodeURIComponent(idea.r.id)}"><strong>${esc(idea.r.title)}</strong></a>?</p>` : `<p class="subtle" style="margin: 0;">Add a recipe or a quick pick like Leftovers.</p>`}
+                <div class="actions" style="margin-top: 6px;">
+                  ${idea ? `<button class="btn btn-primary" type="button" id="make-tonight">Make it tonight</button>` : ""}
+                  <a class="btn btn-secondary" href="planner.html">Plan tonight</a>
+                </div>
+              </div>`;
+            if (idea) $("make-tonight").addEventListener("click", async () => {
+                try {
+                    await setDoc(doc(db, "profiles", uid, "menu", todayKey), { type: "recipe", recipeId: idea.r.id, meal: idea.r.title, updatedAt: new Date() });
+                } catch (err) { toast(friendlyError(err)); }
+            });
+        }
+    }
+
+    // ---------- This week ----------
+    function renderWeek() {
+        $("week").innerHTML = week.map((d) => {
+            const e = plan[d.key];
+            const r = recipeFor(e);
+            let meal = `<span class="open">Nothing planned</span>`;
+            if (r) meal = `<a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a>`;
+            else if (e) meal = esc(e.meal || "Planned");
+            const today = d.key === todayKey;
+            return `<li class="${today ? "is-today" : ""}"><span class="d">${esc(d.short)}</span><span class="m">${meal}</span>${today ? '<span class="today-tag" style="margin: 0;">Today</span>' : ""}</li>`;
+        }).join("");
+    }
+
+    function renderShopCount() {
+        if (!loaded.recipes || !loaded.plan) return;
+        const ids = new Set();
+        week.forEach((d) => {
+            const r = recipeFor(plan[d.key]);
+            if (r) r.ingredients.forEach((ing) => ids.add("r:" + String(ing).trim().toLowerCase()));
+        });
+        shopping.extra.forEach((x) => ids.add("x:" + x));
+        const left = [...ids].filter((id) => !shopping.checked.includes(id)).length;
+        $("shop-count").textContent = ids.size === 0 ? "Nothing yet" : left === 0 ? "All done" : `${left} item${left === 1 ? "" : "s"} to buy`;
+    }
+
+    // ---------- Flip book ----------
+    function renderBook() {
+        const book = $("book");
+        if (!recipes.length) {
+            $("book-controls").hidden = true;
+            book.innerHTML = `<div class="page" style="align-items: center; justify-content: center; text-align: center;">
+                <h3>Your book is empty</h3><p class="subtle">Add your first recipe and it'll show up here, page by page.</p>
+                <a class="btn btn-primary" href="editor.html">${icons.plus}Add a recipe</a></div>`;
+            return;
+        }
+        const r = recipes[page];
+        const shown = r.ingredients.slice(0, 7);
+        const more = r.ingredients.length - shown.length;
+        const note = r.notes || r.description;
+        book.innerHTML = `
+          <div class="page">
+            <a class="photo" href="recipe.html?id=${encodeURIComponent(r.id)}" tabindex="-1" aria-hidden="true">${photoHtml(r.photoURL, "")}</a>
+            <div class="eyebrow">${[r.category, r.subCategory].filter(Boolean).map(esc).join(" · ")}</div>
+            <h3>${esc(r.title)}</h3>
+          </div>
+          <div class="page">
+            ${(totalTime(r) || r.servings) ? `<div class="facts-line">${totalTime(r) ? `<span><strong>Time</strong> ${esc(totalTime(r))}</span>` : ""}${r.servings ? `<span><strong>Serves</strong> ${esc(r.servings)}</span>` : ""}</div>` : ""}
+            <div>
+              <h4>You'll need</h4>
+              ${shown.length ? `<ul>${shown.map((i) => `<li>${esc(i)}</li>`).join("")}${more > 0 ? `<li style="list-style: none; margin-left: -20px; color: var(--muted);">and ${more} more…</li>` : ""}</ul>` : `<p class="help">No ingredients added yet.</p>`}
+            </div>
+            ${note ? `<p class="note">${esc(note)}</p>` : ""}
+            <div class="actions" style="margin-top: auto;">
+              <a class="btn btn-primary" href="recipe.html?id=${encodeURIComponent(r.id)}">Open recipe</a>
+              <button class="btn btn-secondary" type="button" id="book-add">Add to this week</button>
+            </div>
+          </div>`;
+        $("book-add").addEventListener("click", () => addToWeek(r));
+        $("book-controls").hidden = recipes.length < 2;
+        $("page-count").textContent = `Page ${page + 1} of ${recipes.length}`;
+    }
+
+    function turn(step) {
+        if (recipes.length < 2) return;
+        const book = $("book");
+        book.style.setProperty("--turn", step > 0 ? "-14px" : "14px");
+        book.classList.add("turning");
+        setTimeout(() => {
+            page = (page + step + recipes.length) % recipes.length;
+            renderBook();
+            book.style.setProperty("--turn", step > 0 ? "14px" : "-14px");
+            requestAnimationFrame(() => book.classList.remove("turning"));
+        }, 160);
+    }
+    $("prev-page").addEventListener("click", () => turn(-1));
+    $("next-page").addEventListener("click", () => turn(1));
+    $("shelf").addEventListener("keydown", (e) => {
+        if (e.target.matches("input, textarea")) return;
+        if (e.key === "ArrowLeft") turn(-1);
+        if (e.key === "ArrowRight") turn(1);
+    });
+    let touchX = null;
+    $("book").addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+    $("book").addEventListener("touchend", (e) => {
+        if (touchX === null) return;
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 50) turn(dx < 0 ? 1 : -1);
+        touchX = null;
+    });
+
+    // ---------- Suggestions ----------
+    function tastes() {
+        const cuisines = {}, cats = {};
+        recipes.forEach((r) => {
+            if (r.subCategory) cuisines[r.subCategory] = (cuisines[r.subCategory] || 0) + 1;
+            cats[r.category] = (cats[r.category] || 0) + 1;
+        });
+        const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k]) => k);
+        return { cuisines: top(cuisines).slice(0, 3), categories: top(cats) };
+    }
+
+    // Recipes from your own book worth making again: not on this week's plan,
+    // matching your favorite cuisines, and the ones you haven't planned in longest.
+    function mySuggestions() {
+        const { cuisines } = tastes();
+        const thisWeek = new Set(week.map((d) => recipeFor(plan[d.key])).filter(Boolean).map((r) => r.id));
+        const last = {};
+        Object.entries(plan).forEach(([k, e]) => {
+            const r = recipeFor(e);
+            if (r && k <= todayKey && (!last[r.id] || k > last[r.id])) last[r.id] = k;
+        });
+        const daysAgo = (k) => Math.round((now - new Date(k + "T12:00:00")) / 86400000);
+        return recipes
+            .filter((r) => !thisWeek.has(r.id))
+            .map((r) => {
+                const ago = last[r.id] ? daysAgo(last[r.id]) : null;
+                let score = ago === null ? 40 : Math.min(ago, 60);
+                if (cuisines.includes(r.subCategory)) score += 15;
+                let why = ago === null ? "Not on your plan yet" : ago >= 14 ? `Last planned ${Math.round(ago / 7)} weeks ago` : `Planned ${ago} day${ago === 1 ? "" : "s"} ago`;
+                return { r, score, why };
+            })
+            .sort((a, b) => b.score - a.score || a.r.title.localeCompare(b.r.title))
+            .slice(0, 4);
+    }
+
+    function communitySuggestions() {
+        if (!community) return null;
+        const { cuisines, categories } = tastes();
+        const have = new Set(recipes.map((r) => r.id));
+        return community
+            .filter(({ id, data }) => data.ownerId !== uid && !have.has(`saved_${id}`))
+            .map(({ id, data }, i) => {
+                let score = -i * 0.01; // newer first when tied
+                let why = "New from the community";
+                if (data.subCategory && cuisines.includes(data.subCategory)) { score += 3; why = `Matches: ${data.subCategory}`; }
+                else if (categories.includes(data.category)) { score += 1; why = `More ${data.category.toLowerCase()} ideas`; }
+                return { id, data, score, why };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 4);
+    }
+
+    function renderSuggestions() {
+        if (!loaded.recipes || !loaded.plan) return;
+        const { cuisines } = tastes();
+        $("sugg-why").textContent = cuisines.length
+            ? `Because you cook a lot of ${cuisines.length > 1 ? cuisines.slice(0, -1).join(", ") + " and " + cuisines.at(-1) : cuisines[0]}`
+            : "Based on what's in your book";
+
+        // Other cooks
+        const comm = communitySuggestions();
+        const commEl = $("sugg-community");
+        if (comm === null) {
+            commEl.innerHTML = `<p class="loading">Loading…</p>`;
+        } else if (!comm.length) {
+            commEl.style.display = "block";
+            commEl.innerHTML = `<div class="empty" style="padding: 28px;"><p style="margin: 0;">No shared recipes to suggest yet. When other cooks mark recipes as Public, ones that fit your taste will show up here.</p></div>`;
+        } else {
+            commEl.style.display = "";
+            commEl.innerHTML = comm.map(({ id, data, why }) => {
+                const r = normalizeRecipe(id, data);
+                const meta = [totalTime(r), r.servings ? `Serves ${r.servings}` : ""].filter(Boolean).join(" · ");
+                return `
+                  <article class="sugg-card">
+                    <a class="photo" href="recipe.html?pub=${encodeURIComponent(id)}" tabindex="-1" aria-hidden="true">${photoHtml(r.photoURL, "")}</a>
+                    <div class="body">
+                      <span class="why">${esc(why)}</span>
+                      <h3><a href="recipe.html?pub=${encodeURIComponent(id)}">${esc(r.title)}</a></h3>
+                      <span class="meta">by ${esc(data.ownerName || "a home cook")}${meta ? " · " + esc(meta) : ""}</span>
+                      <div class="foot"><button class="btn btn-primary btn-block" type="button" data-save="${esc(id)}">Save to my book</button></div>
+                    </div>
+                  </article>`;
+            }).join("");
+            commEl.querySelectorAll("[data-save]").forEach((b) => b.addEventListener("click", async () => {
+                const item = community.find((c) => c.id === b.dataset.save);
+                b.disabled = true;
+                b.textContent = "Saving…";
+                try {
+                    await saveCopy(user, item.id, item.data);
+                    toast(`Saved "${item.data.title}" to your book`);
+                } catch (err) {
+                    toast(friendlyError(err));
+                    b.disabled = false;
+                    b.textContent = "Save to my book";
+                }
+            }));
+        }
+
+        // Your own book
+        const mine = mySuggestions();
+        const mineEl = $("sugg-mine");
+        if (!mine.length) {
+            mineEl.style.display = "block";
+            mineEl.innerHTML = `<div class="empty" style="padding: 28px;"><p style="margin: 0;">${recipes.length ? "Everything in your book is already on this week's plan. Nice!" : "Add recipes to your book and we'll remind you of ones worth making again."}</p></div>`;
+        } else {
+            mineEl.style.display = "";
+            mineEl.innerHTML = mine.map(({ r, why }) => {
+                const meta = [r.subCategory || r.category, totalTime(r)].filter(Boolean).join(" · ");
+                return `
+                  <article class="sugg-card">
+                    <a class="photo" href="recipe.html?id=${encodeURIComponent(r.id)}" tabindex="-1" aria-hidden="true">${photoHtml(r.photoURL, "")}</a>
+                    <div class="body">
+                      <span class="why mine">${esc(why)}</span>
+                      <h3><a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a></h3>
+                      <span class="meta">${esc(meta)}</span>
+                      <div class="foot"><button class="btn btn-secondary btn-block" type="button" data-plan="${esc(r.id)}">Add to this week</button></div>
+                    </div>
+                  </article>`;
+            }).join("");
+            mineEl.querySelectorAll("[data-plan]").forEach((b) => b.addEventListener("click", () => {
+                const r = recipes.find((x) => x.id === b.dataset.plan);
+                if (r) addToWeek(r);
+            }));
+        }
+    }
+</script>
+</body>
+</html>

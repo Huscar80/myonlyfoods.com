@@ -1,7 +1,7 @@
 // myonlyfoods — shared Firebase setup and page helpers
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // These values are safe to have in public code. Your data is protected by the
@@ -107,8 +107,9 @@ export function renderHeader(active) {
     slot.className = "site-header";
     slot.innerHTML = `
       <div class="inner">
-        <a class="brand" href="dashboard.html"><img src="images/mainlogo.jpg" alt="">myonlyfoods</a>
+        <a class="brand" href="home.html"><img src="images/mainlogo.jpg" alt="">myonlyfoods</a>
         <nav class="main-nav" aria-label="Main">
+          <a href="home.html"${cur("home")}>Home</a>
           <a href="dashboard.html"${cur("recipes")}>My recipes</a>
           <a href="planner.html"${cur("planner")}>Meal plan</a>
           <a href="profile.html"${cur("profile")}>Profile</a>
@@ -156,8 +157,72 @@ export function normalizeRecipe(id, data) {
         collections: Array.isArray(d.collections) ? d.collections : [],
         visibility: d.visibility || "private",
         price: d.price || "",
+        savedFrom: d.savedFrom || null,
         createdAt: d.createdAt,
     };
+}
+
+// ---------- Sharing ----------
+// Recipes marked Public are copied to a shared "publicRecipes" list so other
+// people can find them. Private and For sale recipes are never copied there.
+export async function syncPublicRecipe(user, recipeId, data) {
+    const ref = doc(db, "publicRecipes", recipeId);
+    if (data.visibility !== "public") {
+        await deleteDoc(ref).catch(() => {}); // fine if it was never shared
+        return;
+    }
+    let ownerName = user.displayName || "";
+    try {
+        const p = await getDoc(doc(db, "profiles", user.uid));
+        if (p.exists() && p.data().name) ownerName = p.data().name;
+    } catch { /* keep displayName */ }
+    await setDoc(ref, {
+        ownerId: user.uid,
+        ownerName: ownerName || "A home cook",
+        title: data.title || "",
+        description: data.description || "",
+        category: data.category || "",
+        subCategory: data.subCategory || "",
+        prepTime: data.prepTime || "",
+        cookTime: data.cookTime || "",
+        servings: data.servings || "",
+        ingredients: data.ingredients || [],
+        steps: data.steps || [],
+        notes: data.notes || "",
+        photoURL: data.photoURL || "",
+        updatedAt: new Date(),
+    });
+}
+
+// Copy someone's public recipe into your own book. Saving the same one twice
+// just updates your copy, because the copy's id is based on the original's.
+export async function saveCopy(user, pubId, pub) {
+    const copyId = `saved_${pubId}`;
+    await setDoc(doc(db, "profiles", user.uid, "recipes", copyId), {
+        title: pub.title || "Untitled recipe",
+        description: pub.description || "",
+        category: pub.category || "Dinner",
+        subCategory: pub.subCategory || "None",
+        prepTime: pub.prepTime || "",
+        cookTime: pub.cookTime || "",
+        servings: pub.servings || "",
+        ingredients: pub.ingredients || [],
+        steps: pub.steps || [],
+        instructions: (pub.steps || []).join("\n"),
+        notes: pub.notes || "",
+        photoURL: pub.photoURL || "",
+        collections: [],
+        visibility: "private",
+        price: "",
+        savedFrom: { recipeId: pubId, ownerId: pub.ownerId || "", ownerName: pub.ownerName || "" },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }, { merge: true });
+    return copyId;
+}
+
+export function unpublishRecipe(recipeId) {
+    return deleteDoc(doc(db, "publicRecipes", recipeId)).catch(() => {});
 }
 
 export function totalTime(r) {

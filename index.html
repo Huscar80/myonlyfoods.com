@@ -41,7 +41,7 @@
     // Already signed in? Skip straight to the recipe book.
     const stop = onAuthStateChanged(auth, (user) => {
         stop();
-        if (user) window.location.replace("dashboard.html");
+        if (user) window.location.replace("home.html");
     });
 
     const form = document.getElementById("loginForm");
@@ -62,7 +62,7 @@
         btn.textContent = "Signing in…";
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.replace("dashboard.html");
+            window.location.replace("home.html");
         } catch (err) {
             errorBox.textContent = friendlyError(err);
             errorBox.hidden = false;

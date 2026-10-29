@@ -88,7 +88,7 @@
                 <section class="card stack" aria-labelledby="vis-h" style="gap: 10px;">
                     <h2 id="vis-h" style="margin: 0 0 4px;">Who can see it?</h2>
                     <button type="button" class="vis-option" data-vis="private"><span class="t">Private</span><span class="d">Only you can see it.</span></button>
-                    <button type="button" class="vis-option" data-vis="public"><span class="t">Public <span class="badge badge-soon">Soon</span></span><span class="d">Anyone can view it for free once Browse launches.</span></button>
+                    <button type="button" class="vis-option" data-vis="public"><span class="t">Public</span><span class="d">Other cooks can find it, view it for free and save a copy.</span></button>
                     <button type="button" class="vis-option" data-vis="sale"><span class="t">For sale <span class="badge badge-sale" style="font-size:11px; padding:2px 8px;">Coming soon</span></span><span class="d">Others pay to unlock the full recipe.</span></button>
                     <div id="price-wrap" hidden style="margin-top: 6px;">
                         <label for="price" class="label" style="display:block; font-size:14px; font-weight:600; margin-bottom:6px;">Your price</label>
@@ -114,7 +114,7 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError } from "./js/firebase.js";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("recipes");
@@ -257,6 +257,15 @@
     (r.steps.length ? r.steps : ["", ""]).forEach((s) => addStep(s));
     showPhoto(photoURL);
     setVisibility(r.visibility);
+    // A recipe saved from someone else's book stays private: it's their recipe to share or sell.
+    if (r.savedFrom) {
+        document.querySelectorAll('.vis-option[data-vis="public"], .vis-option[data-vis="sale"]').forEach((b) => b.hidden = true);
+        setVisibility("private");
+        const note = document.createElement("p");
+        note.className = "help";
+        note.textContent = `Saved from ${r.savedFrom.ownerName || "another cook"}'s book, so it stays private.`;
+        $("price-wrap").before(note);
+    }
 
     $("collections").innerHTML = allCollections.length
         ? allCollections.map((c, i) => `<label class="check"><input type="checkbox" value="${esc(c)}" ${r.collections.includes(c) ? "checked" : ""}>${esc(c)}</label>`).join("")
@@ -337,10 +346,30 @@
                 const blob = await shrinkImage(photoFile);
                 const url = await uploadImage(`recipe_photos/${user.uid}/${recipeRef.id}.jpg`, blob);
                 await updateDoc(recipeRef, { photoURL: url });
+                data.photoURL = url;
+                photoURL = url;
+                photoFile = null;
             } catch (photoErr) {
                 console.warn("Photo upload failed:", photoErr);
                 err.className = "alert";
                 err.innerHTML = `Your recipe was saved, but the photo couldn't be uploaded. Photo uploads need Firebase Storage turned on (Blaze plan). <a href="recipe.html?id=${encodeURIComponent(recipeRef.id)}">View your recipe</a>`;
+                err.hidden = false;
+                btn.disabled = false;
+                btn.textContent = "Save recipe";
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+        }
+
+        // Share it (or stop sharing it) with other cooks.
+        btn.textContent = "Saving…";
+        try {
+            await syncPublicRecipe(user, recipeRef.id, data);
+        } catch (shareErr) {
+            console.warn("Sharing failed:", shareErr);
+            if (visibility === "public") {
+                err.className = "alert";
+                err.innerHTML = `Your recipe was saved, but it couldn't be shared publicly yet. (The Firestore rules may need updating.) <a href="recipe.html?id=${encodeURIComponent(recipeRef.id)}">View your recipe</a>`;
                 err.hidden = false;
                 btn.disabled = false;
                 btn.textContent = "Save recipe";

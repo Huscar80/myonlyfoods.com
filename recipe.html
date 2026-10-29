@@ -15,7 +15,7 @@
 </main>
 
 <script type="module">
-    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast } from "./js/firebase.js";
+    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast, unpublishRecipe, saveCopy } from "./js/firebase.js";
     import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -23,10 +23,25 @@
     document.getElementById("back").innerHTML = `${icons.back}My Recipe Book`;
 
     const content = document.getElementById("content");
-    const id = new URLSearchParams(location.search).get("id");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    const pubId = params.get("pub");   // a recipe someone else shared
     const user = await requireUser();
 
-    if (!id) {
+    if (pubId) {
+        try {
+            const snap = await getDoc(doc(db, "publicRecipes", pubId));
+            if (!snap.exists()) {
+                content.innerHTML = `<div class="empty"><h2>Recipe not found</h2><p>The cook who shared it may have made it private.</p></div>`;
+            } else if (snap.data().ownerId === user.uid) {
+                window.location.replace(`recipe.html?id=${encodeURIComponent(pubId)}`);
+            } else {
+                showShared(snap.id, snap.data());
+            }
+        } catch (err) {
+            content.innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
+        }
+    } else if (!id) {
         content.innerHTML = `<div class="empty"><p>No recipe selected.</p></div>`;
     } else {
         try {
@@ -41,7 +56,46 @@
         }
     }
 
+    function showShared(sharedId, data) {
+        const r = normalizeRecipe(sharedId, data);
+        const owner = data.ownerName || "a home cook";
+        const actions = `
+            <p class="help" style="font-size: 15px;">Shared by <strong>${esc(owner)}</strong></p>
+            <div class="actions">
+              <button class="btn btn-primary" type="button" id="save-btn">${icons.plus}Save to my book</button>
+              <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
+            </div>`;
+        render(r, actions);
+        document.getElementById("print-btn").addEventListener("click", () => window.print());
+        document.getElementById("save-btn").addEventListener("click", async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            try {
+                const copyId = await saveCopy(user, sharedId, data);
+                toast("Saved to your book");
+                window.location.href = `recipe.html?id=${encodeURIComponent(copyId)}`;
+            } catch (err) {
+                toast(friendlyError(err));
+                btn.disabled = false;
+            }
+        });
+    }
+
     function show(r) {
+        const credit = r.savedFrom ? `<p class="help" style="font-size: 15px;">Saved from <strong>${esc(r.savedFrom.ownerName || "another cook")}</strong>'s book</p>` : "";
+        const actions = `
+            ${credit}
+            <div>${visibilityBadge(r)}</div>
+            <div class="actions">
+              <a class="btn btn-primary" href="editor.html?id=${encodeURIComponent(r.id)}">${icons.edit}Edit recipe</a>
+              <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
+              <button class="btn btn-danger" type="button" id="delete-btn">${icons.trash}Delete</button>
+            </div>`;
+        render(r, actions);
+        wireOwnActions(r);
+    }
+
+    function render(r, actions) {
         document.title = `${r.title} | myonlyfoods`;
         const eyebrow = [r.category, r.subCategory, ...r.collections].filter(Boolean).map(esc).join(" · ");
         const facts = [["Prep", r.prepTime], ["Cook", r.cookTime], ["Serves", r.servings]].filter(([, v]) => v);
@@ -55,12 +109,7 @@
                 <h1>${esc(r.title)}</h1>
                 ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ""}
                 ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div class="fact"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join("")}</div>` : ""}
-                <div>${visibilityBadge(r)}</div>
-                <div class="actions">
-                  <a class="btn btn-primary" href="editor.html?id=${encodeURIComponent(r.id)}">${icons.edit}Edit recipe</a>
-                  <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
-                  <button class="btn btn-danger" type="button" id="delete-btn">${icons.trash}Delete</button>
-                </div>
+                ${actions}
               </div>
             </div>
 
@@ -84,13 +133,16 @@
               </section>
             </div>
           </article>`;
+    }
 
+    function wireOwnActions(r) {
         document.getElementById("print-btn").addEventListener("click", () => window.print());
         document.getElementById("delete-btn").addEventListener("click", async () => {
             if (!confirm(`Delete "${r.title}"? This can't be undone.`)) return;
             try {
                 await deleteDoc(doc(db, "profiles", user.uid, "recipes", r.id));
-                if (r.photoURL) {
+                if (r.visibility === "public") await unpublishRecipe(r.id);
+                if (r.photoURL && !r.savedFrom) {
                     deleteObject(ref(storage, `recipe_photos/${user.uid}/${r.id}.jpg`)).catch(() => {});
                 }
                 window.location.replace("dashboard.html");
