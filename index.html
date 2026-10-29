@@ -3,177 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | myonlyfoods</title>
-    <style>
-        :root {
-            --logo-cream: #f8f6f1; 
-            --primary-green: #2e5a35;
-            --white: #ffffff;
-            --text-dark: #333;
-            --gray-border: #e1e1e1;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--logo-cream);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh; /* Changed to min-height for better scrolling on mobile */
-        }
-
-        .login-card {
-            background: var(--logo-cream);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            border: 1px solid rgba(0,0,0,0.02); /* Very subtle edge */
-        }
-
-        .logo-container {
-            margin-bottom: 25px;
-        }
-
-        .logo-img {
-            max-width: 150px;
-            height: auto;
-        }
-
-        h1 {
-            color: var(--primary-green);
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-        }
-
-        p {
-            color: #555;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-dark);
-            font-size: 0.85rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--white);
-            border: 1px solid var(--gray-border);
-            border-radius: 6px;
-            box-sizing: border-box; 
-            font-size: 1rem;
-        }
-
-        /* BRINGING THE BUTTON BACK TO LIFE */
-        .login-btn {
-            display: block; /* Ensures it takes up space */
-            width: 100%;
-            padding: 14px;
-            background-color: var(--primary-green) !important; /* Force the green color */
-            color: white !important;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: transform 0.1s, opacity 0.3s;
-        }
-
-        .login-btn:hover {
-            opacity: 0.9;
-        }
-
-        .footer-links {
-            margin-top: 25px;
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        .footer-links a {
-            color: var(--primary-green);
-            text-decoration: none;
-            font-weight: 600;
-        }
-    </style>
+    <title>Sign in | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<main class="auth-body">
+    <div class="auth-card">
+        <img src="images/mainlogo.jpg" alt="myonlyfoods logo" class="logo">
+        <h1>Welcome back</h1>
+        <p>Sign in to your recipe book.</p>
 
-    <div class="login-card">
-        <div class="logo-container">
-            <img src="images/mainlogo.jpg" alt="myonlyfoods logo" class="logo-img">
-        </div>
-        
-        <h1>Welcome Back</h1>
-        <p>Log in to your personal culinary portal.</p>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="name@email.com" required>
+        <form id="loginForm" novalidate>
+            <div id="error" class="alert" role="alert" hidden></div>
+            <div class="field">
+                <label for="email">Email address</label>
+                <input class="input" type="email" id="email" autocomplete="email" placeholder="name@email.com" required>
             </div>
-
-            <div class="form-group">
+            <div class="field">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                <input class="input" type="password" id="password" autocomplete="current-password" required>
             </div>
-
-            <button type="submit" class="login-btn">Sign In</button>
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Sign in</button>
         </form>
 
-        <div class="footer-links">
-            <a href="forgotpassword.html">Forgot Password?</a>
-            <span style="margin: 0 8px;">•</span>
-            <a href="signup.html">Create account</a>
+        <div class="auth-links">
+            <a href="forgotpassword.html">Forgot password?</a>
+            <span aria-hidden="true" style="margin: 0 8px;">•</span>
+            <a href="signup.html">Create an account</a>
         </div>
     </div>
+</main>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { auth, friendlyError } from "./js/firebase.js";
+    import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  // PASTE YOUR DATA FROM THE SCREENSHOT HERE:
-  const firebaseConfig = {
-  apiKey: "AIzaSyBKgYfFzvjy47pmIK_G1D9yon8NjjX5lmI",
-  authDomain: "myonlyfoods-e9ee8.firebaseapp.com",
-  projectId: "myonlyfoods-e9ee8",
-  storageBucket: "myonlyfoods-e9ee8.firebasestorage.app",
-  messagingSenderId: "790098672248",
-  appId: "1:790098672248:web:cdac6a3911a7ba82860b8d",  
-  };
+    // Already signed in? Skip straight to the recipe book.
+    const stop = onAuthStateChanged(auth, (user) => {
+        stop();
+        if (user) window.location.replace("dashboard.html");
+    });
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+    const form = document.getElementById("loginForm");
+    const errorBox = document.getElementById("error");
+    const btn = document.getElementById("submitBtn");
 
-  // The Login Logic
-  document.getElementById('loginForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        alert("Login failed: " + error.message);
-      });
-  });
-    </script>
-
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorBox.hidden = true;
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        if (!email || !password) {
+            errorBox.textContent = "Please enter your email and password.";
+            errorBox.hidden = false;
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = "Signing in…";
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            window.location.replace("dashboard.html");
+        } catch (err) {
+            errorBox.textContent = friendlyError(err);
+            errorBox.hidden = false;
+            btn.disabled = false;
+            btn.textContent = "Sign in";
+        }
+    });
+</script>
 </body>
 </html>

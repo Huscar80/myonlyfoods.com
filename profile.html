@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page" style="max-width: 720px;">
+    <h1 class="page-title" style="margin-bottom: 24px;">Your chef profile</h1>
+
+    <section class="card" id="view" style="text-align: center;">
+        <div class="avatar" id="avatar">?</div>
+        <h2 id="v-name" style="font-size: 28px; margin-bottom: 4px;">Loading…</h2>
+        <p class="subtle" id="v-location" style="margin: 0;"></p>
+        <div class="profile-facts" style="text-align: left;">
+            <div class="fact"><div class="k">Favorite food</div><div class="v" id="v-food">—</div></div>
+            <div class="fact"><div class="k">Favorite restaurant</div><div class="v" id="v-rest">—</div></div>
+        </div>
+        <button class="btn btn-primary" type="button" id="edit-btn">Edit profile</button>
+    </section>
+
+    <form class="card stack" id="edit" hidden novalidate>
+        <h2 style="margin: 0;">Edit profile</h2>
+        <div id="error" class="alert" role="alert" hidden></div>
+        <div class="field">
+            <span class="label">Profile picture</span>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div class="avatar" id="e-avatar" style="width: 80px; height: 80px; font-size: 30px; margin: 0;">?</div>
+                <button type="button" class="btn btn-secondary" id="choose-photo">Choose a photo</button>
+                <input type="file" id="photo" accept="image/*" hidden>
+            </div>
+        </div>
+        <div class="field"><label for="name">Name</label><input class="input" id="name" type="text" autocomplete="name"></div>
+        <div class="field"><label for="location">Location</label><input class="input" id="location" type="text" placeholder="City, State"></div>
+        <div class="form-grid">
+            <div class="field"><label for="favFood">Favorite food</label><input class="input" id="favFood" type="text"></div>
+            <div class="field"><label for="favRestaurant">Favorite restaurant</label><input class="input" id="favRestaurant" type="text"></div>
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" id="save">Save changes</button>
+            <button type="button" class="btn btn-plain" id="cancel">Cancel</button>
+        </div>
+    </form>
+</main>
+
+<dialog id="cropper-dialog" aria-labelledby="crop-title" style="width: min(520px, calc(100% - 32px));">
+    <div class="dialog-body">
+        <h2 id="crop-title">Crop your photo</h2>
+        <div style="max-height: 400px; margin-bottom: 16px;"><img id="crop-img" alt="Photo to crop" style="max-width: 100%;"></div>
+        <div class="actions">
+            <button type="button" class="btn btn-primary" id="crop-done">Use this photo</button>
+            <button type="button" class="btn btn-plain" id="crop-cancel">Cancel</button>
+        </div>
+    </div>
+</dialog>
+
+<script type="module">
+    import { db, requireUser, renderHeader, esc, uploadImage, friendlyError, toast } from "./js/firebase.js";
+    import { doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    renderHeader("profile");
+    const $ = (id) => document.getElementById(id);
+    const user = await requireUser();
+    const profileRef = doc(db, "profiles", user.uid);
+
+    let profile = {};
+    let cropper = null;
+    let croppedBlob = null;
+
+    function avatarHtml(url, name) {
+        if (url) return `<img src="${esc(url)}" alt="">`;
+        return esc((name || "?").charAt(0).toUpperCase());
+    }
+
+    onSnapshot(profileRef, (snap) => {
+        profile = snap.data() || {};
+        const name = profile.name || user.displayName || "Chef";
+        $("v-name").textContent = name;
+        $("v-location").textContent = profile.location || "";
+        $("v-food").textContent = profile.favFood || "—";
+        $("v-rest").textContent = profile.favRestaurant || "—";
+        $("avatar").innerHTML = avatarHtml(profile.photoURL, name);
+    }, (err) => toast(friendlyError(err)));
+
+    function openEdit(open) {
+        $("view").hidden = open;
+        $("edit").hidden = !open;
+        if (open) {
+            $("name").value = profile.name || user.displayName || "";
+            $("location").value = profile.location || "";
+            $("favFood").value = profile.favFood || "";
+            $("favRestaurant").value = profile.favRestaurant || "";
+            $("e-avatar").innerHTML = avatarHtml(profile.photoURL, $("name").value);
+            croppedBlob = null;
+            $("error").hidden = true;
+            $("name").focus();
+        }
+    }
+    $("edit-btn").addEventListener("click", () => openEdit(true));
+    $("cancel").addEventListener("click", () => openEdit(false));
+
+    // ---------- Photo cropping ----------
+    $("choose-photo").addEventListener("click", () => $("photo").click());
+    $("photo").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            $("crop-img").src = ev.target.result;
+            $("cropper-dialog").showModal();
+            if (cropper) cropper.destroy();
+            cropper = new Cropper($("crop-img"), { aspectRatio: 1, viewMode: 1 });
+        };
+        reader.readAsDataURL(file);
+    });
+    $("crop-done").addEventListener("click", () => {
+        const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
+        canvas.toBlob((blob) => {
+            croppedBlob = blob;
+            $("e-avatar").innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="">`;
+            $("cropper-dialog").close();
+        }, "image/jpeg", 0.85);
+    });
+    $("crop-cancel").addEventListener("click", () => { $("cropper-dialog").close(); $("photo").value = ""; });
+
+    // ---------- Save ----------
+    $("edit").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = $("save");
+        btn.disabled = true;
+        btn.textContent = "Saving…";
+        const data = {
+            name: $("name").value.trim(),
+            location: $("location").value.trim(),
+            favFood: $("favFood").value.trim(),
+            favRestaurant: $("favRestaurant").value.trim(),
+            updatedAt: new Date(),
+        };
+        try {
+            if (croppedBlob) {
+                try {
+                    data.photoURL = await uploadImage(`profile_pics/${user.uid}`, croppedBlob);
+                } catch (photoErr) {
+                    console.warn(photoErr);
+                    toast("Saved, but the photo couldn't upload (Firebase Storage needs the Blaze plan).");
+                }
+            }
+            await setDoc(profileRef, data, { merge: true });
+            openEdit(false);
+            toast("Profile updated");
+        } catch (err) {
+            $("error").textContent = friendlyError(err);
+            $("error").hidden = false;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Save changes";
+        }
+    });
+</script>
+</body>
+</html>

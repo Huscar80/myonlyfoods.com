@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New recipe | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page page-narrow">
+    <form id="form" novalidate>
+        <div class="page-head" style="align-items: center;">
+            <h1 class="page-title" id="heading">New recipe</h1>
+            <div class="actions">
+                <a class="btn btn-plain" href="dashboard.html" id="cancel">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="save">Save recipe</button>
+            </div>
+        </div>
+
+        <div id="error" class="alert" role="alert" hidden style="margin-bottom: 20px;"></div>
+
+        <div class="split">
+            <div class="main stack" style="gap: 24px;">
+                <section class="card stack" aria-labelledby="basics-h">
+                    <h2 id="basics-h" style="margin: 0;">The basics</h2>
+                    <div class="field">
+                        <label for="title">Recipe name</label>
+                        <input class="input" id="title" type="text" placeholder="e.g. Grandma's Buttermilk Biscuits" required>
+                    </div>
+                    <div class="field">
+                        <label for="description">Short description <span class="help" style="display:inline">(optional)</span></label>
+                        <textarea class="input" id="description" rows="2" placeholder="What makes this one special?"></textarea>
+                    </div>
+                    <div class="field">
+                        <span class="label" id="photo-label">Photo <span class="help" style="display:inline">(optional)</span></span>
+                        <button type="button" class="dropzone" id="dropzone" aria-describedby="photo-label"></button>
+                        <input type="file" id="photo" accept="image/*" hidden>
+                        <button type="button" class="btn btn-plain" id="remove-photo" hidden style="align-self: flex-start;">Remove photo</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="prepTime">Prep time</label>
+                            <input class="input" id="prepTime" type="text" placeholder="20 min">
+                        </div>
+                        <div class="field">
+                            <label for="cookTime">Cook time</label>
+                            <input class="input" id="cookTime" type="text" placeholder="1 hr">
+                        </div>
+                        <div class="field">
+                            <label for="servings">Servings</label>
+                            <input class="input" id="servings" type="text" inputmode="numeric" placeholder="4">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="category">Meal type</label>
+                            <select class="input" id="category"></select>
+                        </div>
+                        <div class="field">
+                            <label for="subCategory">Cuisine</label>
+                            <select class="input" id="subCategory"></select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card stack" aria-labelledby="ing-h" style="gap: 12px;">
+                    <h2 id="ing-h" style="margin: 0;">Ingredients</h2>
+                    <p class="help">One ingredient per line, with the amount. Example: 2 cups flour.</p>
+                    <div id="ingredients" class="stack" style="gap: 10px;"></div>
+                    <button type="button" class="btn btn-dashed" id="add-ing">+ Add ingredient</button>
+                </section>
+
+                <section class="card stack" aria-labelledby="steps-h" style="gap: 14px;">
+                    <h2 id="steps-h" style="margin: 0;">Steps</h2>
+                    <div id="steps" class="stack" style="gap: 14px;"></div>
+                    <button type="button" class="btn btn-dashed" id="add-step">+ Add step</button>
+                </section>
+
+                <section class="card" aria-labelledby="notes-h">
+                    <h2 id="notes-h"><label for="notes">Cook's notes</label> <span class="help" style="display:inline; font-family: var(--sans);">(optional)</span></h2>
+                    <textarea class="input" id="notes" rows="3" placeholder="Swaps, tips, how to store leftovers…"></textarea>
+                </section>
+            </div>
+
+            <aside class="side stack" style="gap: 24px; flex-basis: 300px;">
+                <section class="card stack" aria-labelledby="vis-h" style="gap: 10px;">
+                    <h2 id="vis-h" style="margin: 0 0 4px;">Who can see it?</h2>
+                    <button type="button" class="vis-option" data-vis="private"><span class="t">Private</span><span class="d">Only you can see it.</span></button>
+                    <button type="button" class="vis-option" data-vis="public"><span class="t">Public <span class="badge badge-soon">Soon</span></span><span class="d">Anyone can view it for free once Browse launches.</span></button>
+                    <button type="button" class="vis-option" data-vis="sale"><span class="t">For sale <span class="badge badge-sale" style="font-size:11px; padding:2px 8px;">Coming soon</span></span><span class="d">Others pay to unlock the full recipe.</span></button>
+                    <div id="price-wrap" hidden style="margin-top: 6px;">
+                        <label for="price" class="label" style="display:block; font-size:14px; font-weight:600; margin-bottom:6px;">Your price</label>
+                        <div class="price-box">
+                            <span aria-hidden="true" style="color: var(--muted);">$</span>
+                            <input id="price" type="text" inputmode="decimal" placeholder="3.99">
+                        </div>
+                        <p class="help" style="margin-top: 8px;">You set the price. Buyers get the full recipe; everyone else sees the photo and description. Until selling launches, this recipe stays private.</p>
+                    </div>
+                </section>
+
+                <section class="card" aria-labelledby="col-h">
+                    <h2 id="col-h">Collections</h2>
+                    <div id="collections"></div>
+                    <div class="field" style="margin-top: 10px;">
+                        <label for="new-col">Add to a new collection</label>
+                        <input class="input" id="new-col" type="text" placeholder="e.g. Family favorites">
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </form>
+</main>
+
+<script type="module">
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError } from "./js/firebase.js";
+    import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    renderHeader("recipes");
+    const $ = (id) => document.getElementById(id);
+    const editId = new URLSearchParams(location.search).get("id");
+    const user = await requireUser();
+    const recipesCol = collection(db, "profiles", user.uid, "recipes");
+
+    let visibility = "private";
+    let photoFile = null;      // a new photo chosen in this session
+    let photoURL = "";         // the saved photo, if any
+    let existing = null;
+    let savedRef = null;
+
+    // ---------- Dropdowns ----------
+    function fillSelect(sel, values, current) {
+        const list = current && !values.includes(current) ? [...values, current] : values;
+        sel.innerHTML = list.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+        if (current) sel.value = current;
+    }
+
+    // ---------- Ingredient & step rows ----------
+    function addIngredient(value = "", focus = false) {
+        const row = document.createElement("div");
+        row.className = "row-item";
+        const n = $("ingredients").children.length + 1;
+        row.innerHTML = `
+          <label class="sr-only" for="ing-${n}-${Date.now()}">Ingredient</label>
+          <input class="input" type="text" placeholder="${n === 1 ? "2 cups all-purpose flour" : ""}">
+          <button type="button" class="icon-btn" aria-label="Remove ingredient">${icons.trash}</button>`;
+        const input = row.querySelector("input");
+        input.id = row.querySelector("label").htmlFor;
+        input.value = value;
+        // Press Enter to jump to a new ingredient line.
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); addIngredient("", true); }
+        });
+        row.querySelector("button").addEventListener("click", () => { row.remove(); });
+        $("ingredients").appendChild(row);
+        if (focus) input.focus();
+    }
+
+    function renumberSteps() {
+        [...$("steps").children].forEach((row, i) => {
+            row.querySelector(".step-num").textContent = i + 1;
+            row.querySelector("label").textContent = `Step ${i + 1}`;
+            row.querySelector(".icon-btn").setAttribute("aria-label", `Remove step ${i + 1}`);
+        });
+    }
+
+    function addStep(value = "", focus = false) {
+        const row = document.createElement("div");
+        row.className = "step-row";
+        const uid = "step-" + Math.random().toString(36).slice(2, 8);
+        row.innerHTML = `
+          <span class="step-num" aria-hidden="true"></span>
+          <label class="sr-only" for="${uid}"></label>
+          <textarea class="input" id="${uid}" rows="2"></textarea>
+          <button type="button" class="icon-btn" style="margin-top: 4px;">${icons.trash}</button>`;
+        row.querySelector("textarea").value = value;
+        row.querySelector(".icon-btn").addEventListener("click", () => { row.remove(); renumberSteps(); });
+        $("steps").appendChild(row);
+        renumberSteps();
+        if (focus) row.querySelector("textarea").focus();
+    }
+
+    $("add-ing").addEventListener("click", () => addIngredient("", true));
+    $("add-step").addEventListener("click", () => addStep("", true));
+
+    // ---------- Photo ----------
+    function showPhoto(src) {
+        const dz = $("dropzone");
+        if (src) {
+            dz.classList.add("has-photo");
+            dz.innerHTML = `<img src="${esc(src)}" alt="Recipe photo">`;
+            dz.setAttribute("aria-label", "Change photo");
+            $("remove-photo").hidden = false;
+        } else {
+            dz.classList.remove("has-photo");
+            dz.innerHTML = `${icons.camera}<span><strong style="color: var(--green);">Upload a photo</strong> or drag it here</span>`;
+            dz.removeAttribute("aria-label");
+            $("remove-photo").hidden = true;
+        }
+    }
+    function pickFile(file) {
+        if (!file || !file.type.startsWith("image/")) return;
+        photoFile = file;
+        showPhoto(URL.createObjectURL(file));
+    }
+    $("dropzone").addEventListener("click", () => $("photo").click());
+    $("photo").addEventListener("change", (e) => pickFile(e.target.files[0]));
+    $("dropzone").addEventListener("dragover", (e) => e.preventDefault());
+    $("dropzone").addEventListener("drop", (e) => { e.preventDefault(); pickFile(e.dataTransfer.files[0]); });
+    $("remove-photo").addEventListener("click", () => { photoFile = null; photoURL = ""; $("photo").value = ""; showPhoto(""); });
+
+    // ---------- Visibility ----------
+    function setVisibility(v) {
+        visibility = v;
+        document.querySelectorAll(".vis-option").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.vis === v)));
+        $("price-wrap").hidden = v !== "sale";
+    }
+    document.querySelectorAll(".vis-option").forEach((b) => b.addEventListener("click", () => setVisibility(b.dataset.vis)));
+
+    // ---------- Load ----------
+    let allCollections = [];
+    try {
+        const all = await getDocs(recipesCol);
+        allCollections = [...new Set(all.docs.flatMap((d) => normalizeRecipe(d.id, d.data()).collections))].sort();
+        if (editId) {
+            const found = all.docs.find((d) => d.id === editId);
+            if (found) existing = normalizeRecipe(found.id, found.data());
+        }
+    } catch (err) {
+        $("error").textContent = friendlyError(err);
+        $("error").hidden = false;
+    }
+
+    if (editId && !existing) {
+        $("error").textContent = "We couldn't find that recipe. You can still create a new one below.";
+        $("error").hidden = false;
+    }
+
+    const r = existing || normalizeRecipe(null, {});
+    if (existing) {
+        document.title = `Edit ${existing.title} | myonlyfoods`;
+        $("heading").textContent = "Edit recipe";
+        $("cancel").href = `recipe.html?id=${encodeURIComponent(existing.id)}`;
+        $("title").value = existing.title;
+        $("description").value = existing.description;
+        $("prepTime").value = existing.prepTime;
+        $("cookTime").value = existing.cookTime;
+        $("servings").value = existing.servings;
+        $("notes").value = existing.notes;
+        $("price").value = existing.price;
+        photoURL = existing.photoURL;
+    }
+    fillSelect($("category"), CATEGORIES, existing ? r.category : "Dinner");
+    fillSelect($("subCategory"), CUISINES, r.subCategory || "None");
+    (r.ingredients.length ? r.ingredients : ["", "", ""]).forEach((i) => addIngredient(i));
+    (r.steps.length ? r.steps : ["", ""]).forEach((s) => addStep(s));
+    showPhoto(photoURL);
+    setVisibility(r.visibility);
+
+    $("collections").innerHTML = allCollections.length
+        ? allCollections.map((c, i) => `<label class="check"><input type="checkbox" value="${esc(c)}" ${r.collections.includes(c) ? "checked" : ""}>${esc(c)}</label>`).join("")
+        : `<p class="help">No collections yet.</p>`;
+
+    // ---------- Save ----------
+    $("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const err = $("error");
+        err.hidden = true;
+
+        const title = $("title").value.trim();
+        if (!title) {
+            err.textContent = "Please give your recipe a name.";
+            err.hidden = false;
+            $("title").focus();
+            return;
+        }
+        let price = $("price").value.trim().replace(/^\$/, "");
+        if (visibility === "sale") {
+            if (!/^\d+(\.\d{1,2})?$/.test(price) || Number(price) <= 0) {
+                err.textContent = "Please enter a price like 3.99.";
+                err.hidden = false;
+                $("price").focus();
+                return;
+            }
+            price = Number(price).toFixed(2);
+        } else {
+            price = "";
+        }
+
+        const ingredients = [...$("ingredients").querySelectorAll("input")].map((i) => i.value.trim()).filter(Boolean);
+        const steps = [...$("steps").querySelectorAll("textarea")].map((t) => t.value.trim()).filter(Boolean);
+        const collections = [...$("collections").querySelectorAll("input:checked")].map((c) => c.value);
+        const newCol = $("new-col").value.trim();
+        if (newCol && !collections.includes(newCol)) collections.push(newCol);
+
+        const data = {
+            title,
+            description: $("description").value.trim(),
+            category: $("category").value,
+            subCategory: $("subCategory").value,
+            prepTime: $("prepTime").value.trim(),
+            cookTime: $("cookTime").value.trim(),
+            servings: $("servings").value.trim(),
+            ingredients,
+            steps,
+            instructions: steps.join("\n"), // kept so older pages and the meal planner still work
+            notes: $("notes").value.trim(),
+            collections,
+            visibility,
+            price,
+            photoURL: photoFile ? (photoURL || "") : photoURL,
+            updatedAt: new Date(),
+        };
+
+        const btn = $("save");
+        btn.disabled = true;
+        btn.textContent = "Saving…";
+
+        const recipeRef = savedRef || (existing ? doc(recipesCol, existing.id) : doc(recipesCol));
+        if (!existing && !savedRef) data.createdAt = new Date();
+
+        try {
+            await setDoc(recipeRef, data, { merge: true });
+            savedRef = recipeRef; // a second click updates this recipe instead of making a copy
+        } catch (saveErr) {
+            err.textContent = friendlyError(saveErr);
+            err.hidden = false;
+            btn.disabled = false;
+            btn.textContent = "Save recipe";
+            return;
+        }
+
+        if (photoFile) {
+            btn.textContent = "Uploading photo…";
+            try {
+                const blob = await shrinkImage(photoFile);
+                const url = await uploadImage(`recipe_photos/${user.uid}/${recipeRef.id}.jpg`, blob);
+                await updateDoc(recipeRef, { photoURL: url });
+            } catch (photoErr) {
+                console.warn("Photo upload failed:", photoErr);
+                err.className = "alert";
+                err.innerHTML = `Your recipe was saved, but the photo couldn't be uploaded. Photo uploads need Firebase Storage turned on (Blaze plan). <a href="recipe.html?id=${encodeURIComponent(recipeRef.id)}">View your recipe</a>`;
+                err.hidden = false;
+                btn.disabled = false;
+                btn.textContent = "Save recipe";
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+        }
+
+        window.location.href = `recipe.html?id=${encodeURIComponent(recipeRef.id)}`;
+    });
+</script>
+</body>
+</html>

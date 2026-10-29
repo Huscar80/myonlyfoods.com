@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page page-narrow">
+    <a class="back-link" href="dashboard.html" id="back"></a>
+    <div id="content"><p class="loading">Loading recipe…</p></div>
+</main>
+
+<script type="module">
+    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast } from "./js/firebase.js";
+    import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+    renderHeader("recipes");
+    document.getElementById("back").innerHTML = `${icons.back}My Recipe Book`;
+
+    const content = document.getElementById("content");
+    const id = new URLSearchParams(location.search).get("id");
+    const user = await requireUser();
+
+    if (!id) {
+        content.innerHTML = `<div class="empty"><p>No recipe selected.</p></div>`;
+    } else {
+        try {
+            const snap = await getDoc(doc(db, "profiles", user.uid, "recipes", id));
+            if (!snap.exists()) {
+                content.innerHTML = `<div class="empty"><h2>Recipe not found</h2><p>It may have been deleted.</p></div>`;
+            } else {
+                show(normalizeRecipe(snap.id, snap.data()));
+            }
+        } catch (err) {
+            content.innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
+        }
+    }
+
+    function show(r) {
+        document.title = `${r.title} | myonlyfoods`;
+        const eyebrow = [r.category, r.subCategory, ...r.collections].filter(Boolean).map(esc).join(" · ");
+        const facts = [["Prep", r.prepTime], ["Cook", r.cookTime], ["Serves", r.servings]].filter(([, v]) => v);
+
+        content.innerHTML = `
+          <article>
+            <div class="hero">
+              <div class="photo">${photoHtml(r.photoURL, r.title)}</div>
+              <div class="info">
+                <span class="eyebrow">${eyebrow}</span>
+                <h1>${esc(r.title)}</h1>
+                ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ""}
+                ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div class="fact"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join("")}</div>` : ""}
+                <div>${visibilityBadge(r)}</div>
+                <div class="actions">
+                  <a class="btn btn-primary" href="editor.html?id=${encodeURIComponent(r.id)}">${icons.edit}Edit recipe</a>
+                  <button class="btn btn-secondary" type="button" id="print-btn">${icons.print}Print</button>
+                  <button class="btn btn-danger" type="button" id="delete-btn">${icons.trash}Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="split" style="margin-top: 44px;">
+              <section class="side card" aria-labelledby="ing-h" style="flex-basis: 320px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px;">
+                  <h2 id="ing-h">Ingredients</h2>
+                  <span class="help no-print">Tap to check off</span>
+                </div>
+                ${r.ingredients.length
+                    ? `<ul class="ingredients">${r.ingredients.map((ing) => `<li><label><input type="checkbox"><span>${esc(ing)}</span></label></li>`).join("")}</ul>`
+                    : `<p class="help">No ingredients added yet.</p>`}
+              </section>
+
+              <section class="main" aria-labelledby="steps-h">
+                <h2 id="steps-h" class="section-title" style="font-size: 26px;">Steps</h2>
+                ${r.steps.length
+                    ? `<ol class="steps">${r.steps.map((s, i) => `<li><span class="step-num" aria-hidden="true">${i + 1}</span><p><span class="sr-only">Step ${i + 1}: </span>${esc(s)}</p></li>`).join("")}</ol>`
+                    : `<p class="help">No steps added yet.</p>`}
+                ${r.notes ? `<div class="notes"><h3>Cook's notes</h3><p>${esc(r.notes)}</p></div>` : ""}
+              </section>
+            </div>
+          </article>`;
+
+        document.getElementById("print-btn").addEventListener("click", () => window.print());
+        document.getElementById("delete-btn").addEventListener("click", async () => {
+            if (!confirm(`Delete "${r.title}"? This can't be undone.`)) return;
+            try {
+                await deleteDoc(doc(db, "profiles", user.uid, "recipes", r.id));
+                if (r.photoURL) {
+                    deleteObject(ref(storage, `recipe_photos/${user.uid}/${r.id}.jpg`)).catch(() => {});
+                }
+                window.location.replace("dashboard.html");
+            } catch (err) {
+                toast(friendlyError(err));
+            }
+        });
+    }
+</script>
+</body>
+</html>

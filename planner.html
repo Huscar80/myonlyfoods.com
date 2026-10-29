@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal plan | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Meal plan</h1>
+            <p class="subtle">Plan the week from your recipe book. Your shopping list builds itself.</p>
+        </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Meal plan views">
+        <button class="tab" role="tab" id="tab-week" aria-controls="panel-week" aria-selected="true">This week</button>
+        <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" aria-selected="false" tabindex="-1">Shopping list</button>
+    </div>
+
+    <section id="panel-week" role="tabpanel" aria-labelledby="tab-week">
+        <div class="week" id="week"><p class="loading">Loading…</p></div>
+    </section>
+
+    <section id="panel-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+        <div class="card" style="max-width: 720px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom: 8px;">
+                <h2 style="margin:0;">Shopping list</h2>
+                <button class="btn btn-secondary" type="button" id="copy-btn">Copy list</button>
+            </div>
+            <div id="shop"></div>
+        </div>
+    </section>
+</main>
+
+<dialog id="picker" aria-labelledby="picker-title">
+    <div class="dialog-body">
+        <h2 id="picker-title">Choose a recipe</h2>
+        <ul class="pick-list" id="pick-list"></ul>
+        <button class="btn btn-plain btn-block" type="button" id="picker-cancel">Cancel</button>
+    </div>
+</dialog>
+
+<script type="module">
+    import { db, requireUser, renderHeader, esc, normalizeRecipe, friendlyError, toast } from "./js/firebase.js";
+    import { collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    renderHeader("planner");
+    const $ = (id) => document.getElementById(id);
+    const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const user = await requireUser();
+
+    let recipes = [];
+    let menu = {};          // { monday: { meal, recipeId } }
+    let pickingDay = null;
+
+    onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
+        recipes = snap.docs.map((d) => normalizeRecipe(d.id, d.data())).sort((a, b) => a.title.localeCompare(b.title));
+        render();
+    }, showError);
+
+    onSnapshot(collection(db, "profiles", user.uid, "menu"), (snap) => {
+        menu = {};
+        snap.docs.forEach((d) => { menu[d.id] = d.data(); });
+        render();
+    }, showError);
+
+    function showError(err) {
+        $("week").innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
+    }
+
+    // Older plans saved only the recipe's name, so match by id first, then by name.
+    function recipeFor(entry) {
+        if (!entry) return null;
+        return recipes.find((r) => r.id === entry.recipeId) || recipes.find((r) => r.title === entry.meal) || null;
+    }
+
+    function render() {
+        $("week").innerHTML = DAYS.map((day) => {
+            const key = day.toLowerCase();
+            const entry = menu[key];
+            const r = recipeFor(entry);
+            let meal = `<span class="none">Nothing planned</span>`;
+            if (r) meal = `<a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a>`;
+            else if (entry && entry.meal) meal = `<span>${esc(entry.meal)}</span>`;
+            return `
+              <div class="day">
+                <h3>${day}</h3>
+                <div class="meal">${meal}</div>
+                <div class="btns">
+                  <button class="btn btn-secondary" type="button" data-pick="${key}" aria-label="${entry ? "Change" : "Plan"} ${day}'s meal">${entry ? "Change" : "+ Plan"}</button>
+                  ${entry ? `<button class="btn btn-plain" type="button" data-clear="${key}" aria-label="Clear ${day}">Clear</button>` : ""}
+                </div>
+              </div>`;
+        }).join("");
+        $("week").querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => openPicker(b.dataset.pick)));
+        $("week").querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", async () => {
+            try { await deleteDoc(doc(db, "profiles", user.uid, "menu", b.dataset.clear)); }
+            catch (err) { toast(friendlyError(err)); }
+        }));
+        renderShopping();
+    }
+
+    // ---------- Recipe picker ----------
+    function openPicker(dayKey) {
+        pickingDay = dayKey;
+        const dayName = dayKey[0].toUpperCase() + dayKey.slice(1);
+        $("picker-title").textContent = `Choose ${dayName}'s meal`;
+        $("pick-list").innerHTML = recipes.length
+            ? recipes.map((r) => `<li><button type="button" data-id="${esc(r.id)}">${esc(r.title)}</button></li>`).join("")
+            : `<li><p class="help" style="padding: 12px 0;">Your recipe book is empty. <a href="editor.html">Add a recipe</a> first.</p></li>`;
+        $("pick-list").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => assign(b.dataset.id)));
+        $("picker").showModal();
+    }
+    $("picker-cancel").addEventListener("click", () => $("picker").close());
+
+    async function assign(recipeId) {
+        const r = recipes.find((x) => x.id === recipeId);
+        $("picker").close();
+        if (!r || !pickingDay) return;
+        try {
+            await setDoc(doc(db, "profiles", user.uid, "menu", pickingDay), { meal: r.title, recipeId: r.id, updatedAt: new Date() });
+        } catch (err) {
+            toast(friendlyError(err));
+        }
+    }
+
+    // ---------- Shopping list ----------
+    let shopText = "";
+    function renderShopping() {
+        const planned = DAYS.map((d) => recipeFor(menu[d.toLowerCase()])).filter(Boolean);
+        const items = new Map(); // ingredient -> set of recipe names
+        planned.forEach((r) => r.ingredients.forEach((ing) => {
+            const key = ing.trim();
+            if (!items.has(key)) items.set(key, new Set());
+            items.get(key).add(r.title);
+        }));
+        if (items.size === 0) {
+            $("shop").innerHTML = `<p class="help">Plan some meals for the week and their ingredients will show up here.</p>`;
+            $("copy-btn").hidden = true;
+            shopText = "";
+            return;
+        }
+        $("copy-btn").hidden = false;
+        const sorted = [...items.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        shopText = sorted.map(([ing]) => `• ${ing}`).join("\n");
+        $("shop").innerHTML = `<ul class="shop-list ingredients">${sorted.map(([ing, from]) =>
+            `<li><label><input type="checkbox"><span>${esc(ing)}</span><span class="from">${esc([...from].join(", "))}</span></label></li>`
+        ).join("")}</ul>`;
+    }
+
+    $("copy-btn").addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(shopText);
+            toast("Shopping list copied");
+        } catch {
+            toast("Couldn't copy. Try selecting the list instead.");
+        }
+    });
+
+    // ---------- Tabs ----------
+    const tabs = [$("tab-week"), $("tab-shop")];
+    function selectTab(tab) {
+        tabs.forEach((t) => {
+            const on = t === tab;
+            t.setAttribute("aria-selected", String(on));
+            t.tabIndex = on ? 0 : -1;
+            $(t.getAttribute("aria-controls")).hidden = !on;
+        });
+        tab.focus();
+    }
+    tabs.forEach((t, i) => {
+        t.addEventListener("click", () => selectTab(t));
+        t.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") selectTab(tabs[(i + 1) % tabs.length]);
+        });
+    });
+</script>
+</body>
+</html>
