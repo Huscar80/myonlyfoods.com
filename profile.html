@@ -177,7 +177,15 @@
     });
 
     onSnapshot(collection(db, "profiles", user.uid, "menu"), (snap) => {
-        $("s-plan").textContent = `${snap.size} of 7`;
+        // Count the dinners planned for this week (Monday to Sunday).
+        const pad = (n) => String(n).padStart(2, "0");
+        const now = new Date();
+        const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+        const week = new Set(Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }));
+        $("s-plan").textContent = `${snap.docs.filter((d) => week.has(d.id)).length} of 7`;
     });
 
     // ---------- Edit ----------

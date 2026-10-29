@@ -13,165 +13,378 @@
     <div class="page-head">
         <div>
             <h1 class="page-title">Meal plan</h1>
-            <p class="subtle">Plan the week from your recipe book. Your shopping list builds itself.</p>
+            <p class="subtle" id="summary">Loading…</p>
+        </div>
+        <div class="week-nav print-hide">
+            <button class="icon-btn" type="button" id="prev-week" aria-label="Previous week" style="color: var(--green);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="label" aria-live="polite"><strong id="week-name">This week</strong><span id="week-range"></span></div>
+            <button class="icon-btn" type="button" id="next-week" aria-label="Next week" style="color: var(--green);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
         </div>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Meal plan views">
-        <button class="tab" role="tab" id="tab-week" aria-controls="panel-week" aria-selected="true">This week</button>
-        <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" aria-selected="false" tabindex="-1">Shopping list</button>
+    <div class="tabs print-hide" role="tablist" aria-label="Meal plan views">
+        <button class="tab" role="tab" id="tab-week" aria-controls="panel-week" aria-selected="true">Week</button>
+        <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" aria-selected="false" tabindex="-1">Shopping list<span class="badge" id="shop-count" hidden></span></button>
     </div>
 
+    <!-- WEEK -->
     <section id="panel-week" role="tabpanel" aria-labelledby="tab-week">
-        <div class="week" id="week"><p class="loading">Loading…</p></div>
+        <div class="split">
+            <div class="main days" id="days" aria-label="Dinners this week"><p class="loading">Loading…</p></div>
+
+            <aside class="side card picker-panel" id="picker" aria-labelledby="pick-h" style="flex-basis: 320px;">
+                <div>
+                    <div class="eyebrow">Adding to</div>
+                    <h2 id="pick-h">—</h2>
+                </div>
+                <div>
+                    <div class="label" style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Quick picks</div>
+                    <div class="chips" id="quick"></div>
+                </div>
+                <form id="custom-form" novalidate>
+                    <label for="custom" style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px;">Or type anything</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input class="input" id="custom" type="text" maxlength="80" placeholder="e.g. Tacos at Mom's" style="min-height: 44px;">
+                        <button class="btn btn-primary" type="submit">Add</button>
+                    </div>
+                </form>
+                <div style="border-top: 1px solid #f0ebe1; padding-top: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 14px; font-weight: 600;">From your recipe book</span>
+                        <span class="help" id="book-count"></span>
+                    </div>
+                    <div id="search-wrap" hidden style="margin-bottom: 8px;">
+                        <label for="pick-search" class="sr-only">Search your recipes</label>
+                        <input class="input" id="pick-search" type="search" placeholder="Search your recipes" style="min-height: 40px;">
+                    </div>
+                    <div class="pick-list-scroll" id="pick-recipes"></div>
+                    <a href="editor.html" style="display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 600;">+ Add a new recipe to your book</a>
+                </div>
+            </aside>
+        </div>
     </section>
 
+    <!-- SHOPPING -->
     <section id="panel-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
-        <div class="card" style="max-width: 720px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom: 8px;">
-                <h2 style="margin:0;">Shopping list</h2>
-                <button class="btn btn-secondary" type="button" id="copy-btn">Copy list</button>
+        <div class="split">
+            <div class="main card stack" style="gap: 22px;">
+                <form id="add-item-form" class="print-hide" novalidate style="display: flex; gap: 8px;">
+                    <label for="add-item" class="sr-only">Add your own item</label>
+                    <input class="input" id="add-item" type="text" maxlength="80" placeholder="Add your own item — paper towels, milk…">
+                    <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+                <div id="groups" class="stack" style="gap: 22px;"></div>
             </div>
-            <div id="shop"></div>
+
+            <aside class="side stack print-hide" style="gap: 16px; flex-basis: 300px;">
+                <div class="card stack" style="gap: 10px; padding: 20px;">
+                    <h2 style="margin: 0 0 4px;">Take it with you</h2>
+                    <button class="btn btn-primary" type="button" id="copy-btn">Copy list</button>
+                    <button class="btn btn-secondary" type="button" id="print-btn">Print</button>
+                    <button class="btn btn-plain" type="button" id="clear-btn">Clear checked items</button>
+                    <p class="help" style="margin-top: 4px;">Checked items stay checked on your phone too, so you can tick things off in the store.</p>
+                </div>
+                <div class="notes" style="margin-top: 0;">
+                    <h3>Not on the list</h3>
+                    <p style="font-size: 14px;">Quick picks like Leftovers or Takeout, and anything you typed in yourself, don't add ingredients.</p>
+                </div>
+            </aside>
         </div>
     </section>
 </main>
 
-<dialog id="picker" aria-labelledby="picker-title">
-    <div class="dialog-body">
-        <h2 id="picker-title">Choose a recipe</h2>
-        <ul class="pick-list" id="pick-list"></ul>
-        <button class="btn btn-plain btn-block" type="button" id="picker-cancel">Cancel</button>
-    </div>
-</dialog>
-
 <script type="module">
-    import { db, requireUser, renderHeader, esc, normalizeRecipe, friendlyError, toast } from "./js/firebase.js";
-    import { collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, totalTime, friendlyError, toast } from "./js/firebase.js";
+    import { collection, doc, onSnapshot, setDoc, deleteDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("planner");
     const $ = (id) => document.getElementById(id);
-    const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     const user = await requireUser();
+    const uid = user.uid;
 
+    const QUICK = ["Leftovers", "Takeout", "Eat out", "Pizza night"];
+    const potIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 7c0-1.5 1-2 1-3M13 7c0-1.5 1-2 1-3"/></svg>';
+
+    // ---------- Dates (weeks run Monday to Sunday) ----------
+    const pad = (n) => String(n).padStart(2, "0");
+    const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+    function mondayOf(d) {
+        const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        return addDays(x, -((x.getDay() + 6) % 7));
+    }
+    const short = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const todayKey = dayKey(new Date());
+
+    // ---------- State ----------
+    let weekOffset = 0;
+    let weekDays = [];        // [{ key, date, name }]
     let recipes = [];
-    let menu = {};          // { monday: { meal, recipeId } }
-    let pickingDay = null;
+    let plan = {};            // dayKey -> entry (all weeks)
+    let shopping = { checked: [], extra: [] };
+    let selected = null;
+    let unsubShop = null;
+    let pickQuery = "";
 
-    onSnapshot(collection(db, "profiles", user.uid, "recipes"), (snap) => {
+    function setWeek(offset) {
+        weekOffset = offset;
+        const start = addDays(mondayOf(new Date()), offset * 7);
+        weekDays = Array.from({ length: 7 }, (_, i) => {
+            const date = addDays(start, i);
+            return { key: dayKey(date), date, name: date.toLocaleDateString(undefined, { weekday: "long" }) };
+        });
+        $("week-name").textContent = offset === 0 ? "This week" : offset === 1 ? "Next week" : offset === -1 ? "Last week" : `Week of ${short(start)}`;
+        $("week-range").textContent = `${short(start)} – ${short(addDays(start, 6))}`;
+        selected = firstOpenDay();
+        watchShopping();
+        render();
+    }
+    $("prev-week").addEventListener("click", () => setWeek(weekOffset - 1));
+    $("next-week").addEventListener("click", () => setWeek(weekOffset + 1));
+
+    function firstOpenDay(afterKey) {
+        const keys = weekDays.map((d) => d.key);
+        // Start from today when looking at this week, so past days aren't suggested first.
+        let start = afterKey ? keys.indexOf(afterKey) + 1 : Math.max(0, keys.indexOf(todayKey));
+        for (let i = 0; i < 7; i++) {
+            const k = keys[(start + i) % 7];
+            if (!plan[k]) return k;
+        }
+        return afterKey || keys[Math.max(0, keys.indexOf(todayKey))] || keys[0];
+    }
+
+    // ---------- Data ----------
+    onSnapshot(collection(db, "profiles", uid, "recipes"), (snap) => {
         recipes = snap.docs.map((d) => normalizeRecipe(d.id, d.data())).sort((a, b) => a.title.localeCompare(b.title));
         render();
     }, showError);
 
-    onSnapshot(collection(db, "profiles", user.uid, "menu"), (snap) => {
-        menu = {};
-        snap.docs.forEach((d) => { menu[d.id] = d.data(); });
+    onSnapshot(collection(db, "profiles", uid, "menu"), (snap) => {
+        plan = {};
+        // Only date-named entries (2026-10-29). Older plans were saved as "monday" etc.
+        snap.docs.forEach((d) => { if (/^\d{4}-\d{2}-\d{2}$/.test(d.id)) plan[d.id] = d.data(); });
+        if (!selected || !weekDays.some((w) => w.key === selected)) selected = firstOpenDay();
         render();
     }, showError);
 
+    function watchShopping() {
+        if (unsubShop) unsubShop();
+        unsubShop = onSnapshot(doc(db, "profiles", uid, "shopping", weekDays[0].key), (snap) => {
+            const d = snap.data() || {};
+            shopping = { checked: d.checked || [], extra: d.extra || [] };
+            renderShopping();
+        });
+    }
+
     function showError(err) {
-        $("week").innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
+        $("days").innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
     }
 
-    // Older plans saved only the recipe's name, so match by id first, then by name.
-    function recipeFor(entry) {
-        if (!entry) return null;
-        return recipes.find((r) => r.id === entry.recipeId) || recipes.find((r) => r.title === entry.meal) || null;
-    }
+    const recipeById = (id) => recipes.find((r) => r.id === id);
 
+    // ---------- Week view ----------
     function render() {
-        $("week").innerHTML = DAYS.map((day) => {
-            const key = day.toLowerCase();
-            const entry = menu[key];
-            const r = recipeFor(entry);
-            let meal = `<span class="none">Nothing planned</span>`;
-            if (r) meal = `<a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a>`;
-            else if (entry && entry.meal) meal = `<span>${esc(entry.meal)}</span>`;
-            return `
-              <div class="day">
-                <h3>${day}</h3>
-                <div class="meal">${meal}</div>
-                <div class="btns">
-                  <button class="btn btn-secondary" type="button" data-pick="${key}" aria-label="${entry ? "Change" : "Plan"} ${day}'s meal">${entry ? "Change" : "+ Plan"}</button>
-                  ${entry ? `<button class="btn btn-plain" type="button" data-clear="${key}" aria-label="Clear ${day}">Clear</button>` : ""}
-                </div>
-              </div>`;
+        if (!weekDays.length) return;
+        const planned = weekDays.filter((d) => plan[d.key]).length;
+        $("summary").textContent = `${planned} of 7 dinners planned` + (planned < 7 ? ` · ${7 - planned} open` : "");
+
+        $("days").innerHTML = weekDays.map((d) => {
+            const e = plan[d.key];
+            const isToday = d.key === todayKey;
+            const when = `<div class="when"><strong>${esc(d.name)}</strong><span>${esc(short(d.date))}</span>${isToday ? '<span class="today-tag">Today</span>' : ""}</div>`;
+            let meal;
+            if (!e) {
+                meal = `<button type="button" class="plan-empty" data-pick="${d.key}">+ Plan dinner</button>`;
+            } else {
+                const r = e.type !== "quick" ? (recipeById(e.recipeId) || recipes.find((x) => x.title === e.meal)) : null;
+                const thumb = r
+                    ? `<div class="thumb">${r.photoURL ? `<img src="${esc(r.photoURL)}" alt="">` : icons.plate}</div>`
+                    : `<div class="thumb quick">${potIcon}</div>`;
+                const title = r
+                    ? `<a href="recipe.html?id=${encodeURIComponent(r.id)}">${esc(r.title)}</a>`
+                    : `<strong>${esc(e.meal || "Meal")}</strong>`;
+                const sub = r
+                    ? [r.subCategory, totalTime(r)].filter(Boolean).map(esc).join(" · ")
+                    : (e.type === "quick" ? "No recipe needed" : "This recipe was deleted");
+                meal = `<div class="meal">${thumb}<div class="t">${title}<span>${sub}</span></div>
+                    <button type="button" class="btn btn-secondary small-btn" data-pick="${d.key}" aria-label="Swap ${esc(d.name)}'s dinner">Swap</button>
+                    <button type="button" class="icon-btn" data-clear="${d.key}" aria-label="Clear ${esc(d.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
+            }
+            return `<div class="day-row${d.key === selected ? " selected" : ""}">${when}${meal}</div>`;
         }).join("");
-        $("week").querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => openPicker(b.dataset.pick)));
-        $("week").querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", async () => {
-            try { await deleteDoc(doc(db, "profiles", user.uid, "menu", b.dataset.clear)); }
-            catch (err) { toast(friendlyError(err)); }
+
+        $("days").querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => {
+            selected = b.dataset.pick;
+            render();
+            // On a phone the picker sits below the week, so bring it into view.
+            if (window.innerWidth < 900) $("picker").scrollIntoView({ behavior: "smooth", block: "start" });
         }));
+        $("days").querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", async () => {
+            try {
+                await deleteDoc(doc(db, "profiles", uid, "menu", b.dataset.clear));
+                selected = b.dataset.clear;
+            } catch (err) { toast(friendlyError(err)); }
+        }));
+
+        renderPicker();
         renderShopping();
     }
 
-    // ---------- Recipe picker ----------
-    function openPicker(dayKey) {
-        pickingDay = dayKey;
-        const dayName = dayKey[0].toUpperCase() + dayKey.slice(1);
-        $("picker-title").textContent = `Choose ${dayName}'s meal`;
-        $("pick-list").innerHTML = recipes.length
-            ? recipes.map((r) => `<li><button type="button" data-id="${esc(r.id)}">${esc(r.title)}</button></li>`).join("")
-            : `<li><p class="help" style="padding: 12px 0;">Your recipe book is empty. <a href="editor.html">Add a recipe</a> first.</p></li>`;
-        $("pick-list").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => assign(b.dataset.id)));
-        $("picker").showModal();
-    }
-    $("picker-cancel").addEventListener("click", () => $("picker").close());
+    // ---------- Picker ----------
+    $("quick").innerHTML = QUICK.map((q) => `<button type="button" class="quick-pick" data-quick="${esc(q)}">${esc(q)}</button>`).join("");
+    $("quick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => assign({ type: "quick", meal: b.dataset.quick })));
+    $("custom-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = $("custom").value.trim();
+        if (!text) return;
+        $("custom").value = "";
+        assign({ type: "quick", meal: text });
+    });
+    $("pick-search").addEventListener("input", (e) => { pickQuery = e.target.value.trim().toLowerCase(); renderPicker(); });
 
-    async function assign(recipeId) {
-        const r = recipes.find((x) => x.id === recipeId);
-        $("picker").close();
-        if (!r || !pickingDay) return;
+    function renderPicker() {
+        const day = weekDays.find((d) => d.key === selected);
+        $("pick-h").textContent = day ? `${day.name}, ${short(day.date)}` : "—";
+        $("book-count").textContent = `${recipes.length} recipe${recipes.length === 1 ? "" : "s"}`;
+        $("search-wrap").hidden = recipes.length < 8;
+        const list = recipes.filter((r) => !pickQuery || r.title.toLowerCase().includes(pickQuery));
+        if (!recipes.length) {
+            $("pick-recipes").innerHTML = `<p class="help">Your recipe book is empty. Quick picks still work, or add a recipe first.</p>`;
+            return;
+        }
+        $("pick-recipes").innerHTML = list.map((r) => `
+            <button type="button" class="pick-recipe" data-id="${esc(r.id)}">
+              <span class="thumb">${r.photoURL ? `<img src="${esc(r.photoURL)}" alt="">` : icons.plate}</span>
+              <span class="t"><strong>${esc(r.title)}</strong><span>${[r.category, r.subCategory, totalTime(r)].filter(Boolean).map(esc).join(" · ")}</span></span>
+              <span class="add">Add</span>
+            </button>`).join("") || `<p class="help">No recipes match.</p>`;
+        $("pick-recipes").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+            const r = recipeById(b.dataset.id);
+            if (r) assign({ type: "recipe", recipeId: r.id, meal: r.title });
+        }));
+    }
+
+    async function assign(entry) {
+        if (!selected) return;
+        const key = selected;
+        plan[key] = entry;                    // show it right away
+        selected = firstOpenDay(key);         // then move to the next open night
+        render();
         try {
-            await setDoc(doc(db, "profiles", user.uid, "menu", pickingDay), { meal: r.title, recipeId: r.id, updatedAt: new Date() });
+            await setDoc(doc(db, "profiles", uid, "menu", key), { ...entry, updatedAt: new Date() });
         } catch (err) {
+            delete plan[key];
+            render();
             toast(friendlyError(err));
         }
     }
 
     // ---------- Shopping list ----------
-    let shopText = "";
-    function renderShopping() {
-        const planned = DAYS.map((d) => recipeFor(menu[d.toLowerCase()])).filter(Boolean);
-        const items = new Map(); // ingredient -> set of recipe names
-        planned.forEach((r) => r.ingredients.forEach((ing) => {
-            const key = ing.trim();
-            if (!items.has(key)) items.set(key, new Set());
-            items.get(key).add(r.title);
-        }));
-        if (items.size === 0) {
-            $("shop").innerHTML = `<p class="help">Plan some meals for the week and their ingredients will show up here.</p>`;
-            $("copy-btn").hidden = true;
-            shopText = "";
-            return;
-        }
-        $("copy-btn").hidden = false;
-        const sorted = [...items.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-        shopText = sorted.map(([ing]) => `• ${ing}`).join("\n");
-        $("shop").innerHTML = `<ul class="shop-list ingredients">${sorted.map(([ing, from]) =>
-            `<li><label><input type="checkbox"><span>${esc(ing)}</span><span class="from">${esc([...from].join(", "))}</span></label></li>`
-        ).join("")}</ul>`;
+    // A rough guess at the store section from the ingredient's wording.
+    const SECTIONS = [
+        ["Pantry", /\b(broth|stock|sauce|paste|canned?|cans?|jar|powder|ketchup|mustard|mayo|mayonnaise|salsa)\b/i],
+        ["Produce", /\b(bell peppers?|jalape[nñ]os?|fresh)\b/i],
+        ["Meat & seafood", /\b(beef|chicken|pork|sausages?|bacon|turkey|ham|steaks?|shoulder|brisket|ribs?|fish|salmon|tuna|shrimp|lamb|chorizo|hot dogs?)\b/i],
+        ["Dairy, eggs & bread", /\b(milk|buttermilk|butter|cheese|cheddar|parmesan|mozzarella|cream|yogurt|eggs?|buns?|bread|tortillas?|rolls?)\b/i],
+        ["Pantry", /\b(pasta|spaghetti|noodles?|rice|flour|sugar|oil|vinegar|beans|salt|pepper|spices?|cumin|paprika|oregano|cinnamon|baking|honey|syrup|oats|cereal|crumbs|chips|shells|crackers|seasoning|vanilla|cocoa|chocolate)\b/i],
+        ["Produce", /\b(onions?|garlic|lettuce|tomato(es)?|potato(es)?|carrots?|celery|lemons?|limes?|apples?|bananas?|cilantro|parsley|basil|spinach|mushrooms?|avocados?|cucumbers?|zucchini|corn|herbs?|ginger|scallions?|green onions?|berries|strawberries|blueberries|cabbage|broccoli|kale|peppers?)\b/i],
+    ];
+    const ORDER = ["Your items", "Produce", "Meat & seafood", "Dairy, eggs & bread", "Pantry", "Other"];
+    const sectionFor = (text) => (SECTIONS.find(([, re]) => re.test(text)) || ["Other"])[0];
+
+    function shoppingItems() {
+        const map = new Map();
+        weekDays.forEach((d) => {
+            const e = plan[d.key];
+            if (!e || e.type === "quick") return;
+            const r = recipeById(e.recipeId) || recipes.find((x) => x.title === e.meal);
+            if (!r) return;
+            r.ingredients.forEach((ing) => {
+                const name = String(ing).trim();
+                const id = "r:" + name.toLowerCase();
+                if (!map.has(id)) map.set(id, { id, name, from: new Set(), section: sectionFor(name) });
+                map.get(id).from.add(r.title);
+            });
+        });
+        shopping.extra.forEach((x) => map.set("x:" + x, { id: "x:" + x, name: x, from: new Set(["Added by you"]), section: "Your items", extra: true }));
+        return [...map.values()];
     }
 
-    $("copy-btn").addEventListener("click", async () => {
+    function renderShopping() {
+        if (!weekDays.length) return;
+        const items = shoppingItems();
+        const left = items.filter((i) => !shopping.checked.includes(i.id)).length;
+        $("shop-count").textContent = left;
+        $("shop-count").hidden = items.length === 0;
+
+        if (!items.length) {
+            $("groups").innerHTML = `<p class="help">Plan some dinners from your recipe book and their ingredients will show up here. You can also add your own items above.</p>`;
+            return;
+        }
+        $("groups").innerHTML = ORDER.map((section) => {
+            const inSection = items.filter((i) => i.section === section).sort((a, b) => a.name.localeCompare(b.name));
+            if (!inSection.length) return "";
+            return `<div class="shop-group"><h2>${esc(section)}</h2><ul class="shop-list">${inSection.map((i) => `
+                <li><label><input type="checkbox" data-item="${esc(i.id)}" ${shopping.checked.includes(i.id) ? "checked" : ""}>
+                <span class="name">${esc(i.name)}</span><span class="from">${esc([...i.from].join(", "))}</span></label></li>`).join("")}</ul></div>`;
+        }).join("");
+        $("groups").querySelectorAll("input[data-item]").forEach((box) => box.addEventListener("change", async () => {
+            const id = box.dataset.item;
+            try {
+                await setDoc(shopRef(), { checked: box.checked ? arrayUnion(id) : arrayRemove(id) }, { merge: true });
+            } catch (err) { toast(friendlyError(err)); }
+        }));
+    }
+
+    const shopRef = () => doc(db, "profiles", uid, "shopping", weekDays[0].key);
+
+    $("add-item-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = $("add-item").value.trim();
+        if (!text) return;
+        $("add-item").value = "";
+        try { await setDoc(shopRef(), { extra: arrayUnion(text) }, { merge: true }); }
+        catch (err) { toast(friendlyError(err)); }
+    });
+
+    $("clear-btn").addEventListener("click", async () => {
+        const checkedExtras = shopping.extra.filter((x) => shopping.checked.includes("x:" + x));
         try {
-            await navigator.clipboard.writeText(shopText);
+            await setDoc(shopRef(), { checked: [], extra: shopping.extra.filter((x) => !checkedExtras.includes(x)) }, { merge: true });
+            toast("Checked items cleared");
+        } catch (err) { toast(friendlyError(err)); }
+    });
+
+    $("copy-btn").addEventListener("click", async () => {
+        const items = shoppingItems().filter((i) => !shopping.checked.includes(i.id));
+        const text = ORDER.map((section) => {
+            const s = items.filter((i) => i.section === section).map((i) => `• ${i.name}`);
+            return s.length ? `${section}\n${s.join("\n")}` : "";
+        }).filter(Boolean).join("\n\n");
+        try {
+            await navigator.clipboard.writeText(text || "Nothing left to buy!");
             toast("Shopping list copied");
         } catch {
-            toast("Couldn't copy. Try selecting the list instead.");
+            toast("Couldn't copy. Try printing instead.");
         }
     });
+    $("print-btn").addEventListener("click", () => window.print());
 
     // ---------- Tabs ----------
     const tabs = [$("tab-week"), $("tab-shop")];
-    function selectTab(tab) {
+    function selectTab(tab, focus = true) {
         tabs.forEach((t) => {
             const on = t === tab;
             t.setAttribute("aria-selected", String(on));
             t.tabIndex = on ? 0 : -1;
             $(t.getAttribute("aria-controls")).hidden = !on;
         });
-        tab.focus();
+        history.replaceState(null, "", tab.id === "tab-shop" ? "#shopping" : location.pathname);
+        if (focus) tab.focus();
     }
     tabs.forEach((t, i) => {
         t.addEventListener("click", () => selectTab(t));
@@ -179,6 +392,9 @@
             if (e.key === "ArrowRight" || e.key === "ArrowLeft") selectTab(tabs[(i + 1) % tabs.length]);
         });
     });
+    if (location.hash === "#shopping") selectTab($("tab-shop"), false);
+
+    setWeek(0);
 </script>
 </body>
 </html>
