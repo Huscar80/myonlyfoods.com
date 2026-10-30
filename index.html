@@ -3,72 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291057">
+    <title>myonlyfoods | Your recipe book, meal planner and kitchen community</title>
+    <meta name="description" content="A free home for the recipes you love. Build your recipe book, plan your week with an automatic shopping list, and share your favorites with other home cooks.">
+    <link rel="stylesheet" href="css/style.css?v=202610292323">
 </head>
-<body>
-<main class="auth-body">
-    <div class="auth-card">
-        <img src="images/mainlogo.jpg" alt="myonlyfoods logo" class="logo">
-        <h1>Welcome back</h1>
-        <p>Sign in to your recipe book.</p>
+<body class="landing">
 
-        <form id="loginForm" novalidate>
-            <div id="error" class="alert" role="alert" hidden></div>
-            <div class="field">
-                <label for="email">Email address</label>
-                <input class="input" type="email" id="email" autocomplete="email" placeholder="name@email.com" required>
-            </div>
-            <div class="field">
-                <label for="password">Password</label>
-                <input class="input" type="password" id="password" autocomplete="current-password" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Sign in</button>
-        </form>
-
-        <div class="auth-links">
-            <a href="forgotpassword.html">Forgot password?</a>
-            <span aria-hidden="true" style="margin: 0 8px;">•</span>
-            <a href="signup.html">Create an account</a>
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html"><img src="images/mainlogo.jpg" alt="">myonlyfoods</a>
+        <div class="landing-nav" id="guest-nav">
+            <a class="btn btn-plain" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="signup.html">Create account</a>
+        </div>
+        <div class="landing-nav" id="member-nav" hidden>
+            <a class="btn btn-primary" href="home.html">Open my recipe book</a>
         </div>
     </div>
+</header>
+
+<main>
+    <!-- Hero -->
+    <section class="hero-landing">
+        <div class="hero-text">
+            <span class="eyebrow">Free to join</span>
+            <h1>Every recipe you love, in one beautiful book.</h1>
+            <p>myonlyfoods is a home for your recipes: the family favorites, the weeknight go-tos and the ones scribbled on the back of an envelope. Keep them all in one place, plan what's for dinner, and share your best dishes with other home cooks.</p>
+            <div class="actions" id="hero-guest">
+                <a class="btn btn-primary btn-lg" href="signup.html">Start your recipe book</a>
+                <a class="btn btn-secondary btn-lg" href="login.html">I already have an account</a>
+            </div>
+            <div class="actions" id="hero-member" hidden>
+                <a class="btn btn-primary btn-lg" href="home.html">Open my recipe book</a>
+            </div>
+        </div>
+        <div class="hero-collage" aria-hidden="true">
+            <img class="c1" src="https://images.unsplash.com/photo-1547573854-74d2a71d0826?auto=format&fit=crop&w=900&q=70" alt="">
+            <img class="c2" src="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=600&q=70" alt="">
+            <img class="c3" src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=70" alt="">
+        </div>
+    </section>
+
+    <!-- What it does -->
+    <section class="landing-section" aria-labelledby="features-h">
+        <h2 id="features-h" class="landing-h2">What you can do</h2>
+        <div class="features">
+            <article class="feature">
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6M9 12h6"/></svg></div>
+                <h3>Build your recipe book</h3>
+                <p>Add recipes with photos, times and servings. Sort them into collections like "Family favorites" and check off ingredients as you cook.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3M8 17h6"/></svg></div>
+                <h3>Plan your week</h3>
+                <p>Pick dinners for each night, from your book or a quick "Pizza night", and get a shopping list sorted by store aisle, ready on your phone.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+                <h3>Share and discover</h3>
+                <p>Make a recipe public to share it with other cooks. Find new favorites picked for your taste, like them, and save them to your own book.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
+                <h3>Sell your best recipes <span class="badge badge-sale">Coming soon</span></h3>
+                <p>Got a recipe people ask you for? Soon you'll be able to set your own price and let other cooks buy it.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- Plates -->
+    <section class="landing-section" aria-labelledby="plates-h">
+        <h2 id="plates-h" class="landing-h2">Something for every night of the week</h2>
+        <p class="landing-sub">From slow Sunday suppers to fifteen-minute weeknights, keep every kind of meal in one place.</p>
+        <div class="plates">
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&h=600&q=70" alt="Pizza on a wooden board"><figcaption>Pizza night</figcaption></figure>
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&h=600&q=70" alt="Bowl of grilled meat and fresh vegetables"><figcaption>Healthy bowls</figcaption></figure>
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&h=600&q=70" alt="Grilled meat and vegetable skewers"><figcaption>Off the grill</figcaption></figure>
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1526318896980-cf78c088247c?auto=format&fit=crop&w=600&h=600&q=70" alt="Bowl of ramen"><figcaption>Comfort food</figcaption></figure>
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=600&h=600&q=70" alt="Toast topped with blueberries on a black plate"><figcaption>Breakfast</figcaption></figure>
+            <figure><img loading="lazy" src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&h=600&q=70" alt="Raspberry layer cake"><figcaption>Desserts</figcaption></figure>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="landing-section" aria-labelledby="how-h">
+        <h2 id="how-h" class="landing-h2">How it works</h2>
+        <ol class="how">
+            <li><span class="step-num" aria-hidden="true">1</span><div><h3>Create a free account</h3><p>All you need is an email address.</p></div></li>
+            <li><span class="step-num" aria-hidden="true">2</span><div><h3>Add your recipes</h3><p>Type them in, add a photo, and sort them into collections.</p></div></li>
+            <li><span class="step-num" aria-hidden="true">3</span><div><h3>Cook, plan and share</h3><p>Plan your week, take the shopping list to the store, and share the dishes you're proud of.</p></div></li>
+        </ol>
+    </section>
+
+    <!-- Final call -->
+    <section class="landing-cta">
+        <h2>Your recipes deserve a better home than a shoebox.</h2>
+        <p>Free to join. Start your recipe book today.</p>
+        <div class="actions" style="justify-content: center;" id="cta-guest">
+            <a class="btn btn-lg btn-light" href="signup.html">Create your free account</a>
+            <a class="btn btn-lg btn-outline-light" href="login.html">Sign in</a>
+        </div>
+        <div class="actions" style="justify-content: center;" id="cta-member" hidden>
+            <a class="btn btn-lg btn-light" href="home.html">Open my recipe book</a>
+        </div>
+    </section>
 </main>
 
+<footer class="landing-footer">
+    <span>© <span id="year">2026</span> myonlyfoods</span>
+    <span class="photo-credit">Food photos from <a href="https://unsplash.com" rel="noopener">Unsplash</a></span>
+</footer>
+
 <script type="module">
-    import { auth, friendlyError } from "./js/firebase.js?v=202610291057";
-    import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { auth } from "./js/firebase.js?v=202610292323";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Already signed in? Skip straight to the recipe book.
-    const stop = onAuthStateChanged(auth, (user) => {
-        stop();
-        if (user) window.location.replace("home.html");
-    });
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-    const form = document.getElementById("loginForm");
-    const errorBox = document.getElementById("error");
-    const btn = document.getElementById("submitBtn");
+    // If a photo can't load, hide it rather than show a broken image.
+    document.querySelectorAll("img").forEach((img) => img.addEventListener("error", () => {
+        const fig = img.closest("figure");
+        (fig || img).style.display = "none";
+    }));
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        errorBox.hidden = true;
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        if (!email || !password) {
-            errorBox.textContent = "Please enter your email and password.";
-            errorBox.hidden = false;
-            return;
-        }
-        btn.disabled = true;
-        btn.textContent = "Signing in…";
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            window.location.replace("home.html");
-        } catch (err) {
-            errorBox.textContent = friendlyError(err);
-            errorBox.hidden = false;
-            btn.disabled = false;
-            btn.textContent = "Sign in";
-        }
+    // Already signed in? Swap the sign-in buttons for a way back to your book.
+    onAuthStateChanged(auth, (user) => {
+        const member = !!user;
+        ["guest-nav", "hero-guest", "cta-guest"].forEach((id) => document.getElementById(id).hidden = member);
+        ["member-nav", "hero-member", "cta-member"].forEach((id) => document.getElementById(id).hidden = !member);
     });
 </script>
 </body>

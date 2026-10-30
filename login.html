@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css?v=202610292323">
+</head>
+<body>
+<main class="auth-body">
+    <div class="auth-card">
+        <a href="index.html" aria-label="myonlyfoods home"><img src="images/mainlogo.jpg" alt="" class="logo"></a>
+        <h1>Welcome back</h1>
+        <p>Sign in to your recipe book.</p>
+
+        <form id="loginForm" novalidate>
+            <div id="error" class="alert" role="alert" hidden></div>
+            <div class="field">
+                <label for="email">Email address</label>
+                <input class="input" type="email" id="email" autocomplete="email" placeholder="name@email.com" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input class="input" type="password" id="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Sign in</button>
+        </form>
+
+        <div class="auth-links">
+            <a href="forgotpassword.html">Forgot password?</a>
+            <span aria-hidden="true" style="margin: 0 8px;">•</span>
+            <a href="signup.html">Create an account</a>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import { auth, friendlyError } from "./js/firebase.js?v=202610292323";
+    import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // Already signed in? Skip straight to the recipe book.
+    const stop = onAuthStateChanged(auth, (user) => {
+        stop();
+        if (user) window.location.replace("home.html");
+    });
+
+    const form = document.getElementById("loginForm");
+    const errorBox = document.getElementById("error");
+    const btn = document.getElementById("submitBtn");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorBox.hidden = true;
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        if (!email || !password) {
+            errorBox.textContent = "Please enter your email and password.";
+            errorBox.hidden = false;
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = "Signing in…";
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            window.location.replace("home.html");
+        } catch (err) {
+            errorBox.textContent = friendlyError(err);
+            errorBox.hidden = false;
+            btn.disabled = false;
+            btn.textContent = "Sign in";
+        }
+    });
+</script>
+</body>
+</html>

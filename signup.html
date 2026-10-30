@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create account | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610291057">
+    <link rel="stylesheet" href="css/style.css?v=202610292323">
 </head>
 <body>
 <main class="auth-body">
     <div class="auth-card">
-        <img src="images/mainlogo.jpg" alt="myonlyfoods logo" class="logo">
+        <a href="index.html" aria-label="myonlyfoods home"><img src="images/mainlogo.jpg" alt="" class="logo"></a>
         <h1>Join the table</h1>
         <p>Create a free account and start your recipe book.</p>
 
@@ -36,13 +36,13 @@
         </form>
 
         <div class="auth-links">
-            Already have an account? <a href="index.html">Sign in</a>
+            Already have an account? <a href="login.html">Sign in</a>
         </div>
     </div>
 </main>
 
 <script type="module">
-    import { auth, db, friendlyError } from "./js/firebase.js?v=202610291057";
+    import { auth, db, friendlyError } from "./js/firebase.js?v=202610292323";
     import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 

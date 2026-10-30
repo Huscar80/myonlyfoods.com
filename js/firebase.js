@@ -100,7 +100,7 @@ export function requireUser() {
         const stop = onAuthStateChanged(auth, (user) => {
             stop();
             if (user) resolve(user);
-            else window.location.replace("index.html");
+            else window.location.replace("login.html");
         });
     });
 }
