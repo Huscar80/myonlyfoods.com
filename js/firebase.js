@@ -268,6 +268,77 @@ export async function setLike(user, pubId, on) {
 
 export const heartIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
 
+// ---------- Reports ----------
+// Reports are saved in Firestore (the permanent record, visible in the Firebase
+// console) and emailed to the site owner through Web3Forms (free, up to 250 a month).
+// Get a free key at https://web3forms.com using the email that should receive
+// reports, then paste it here. Until then, reports are still saved, just not emailed.
+// The key is safe to have in public code; it only lets the site send email to you.
+export const REPORT_EMAIL_KEY = "";
+
+export const REPORT_REASONS = [
+    "Offensive or inappropriate",
+    "Spam or advertising",
+    "Copied from someone else",
+    "Not a real recipe",
+    "Something else",
+];
+
+// Returns true if this person already reported this recipe.
+export async function alreadyReported(user, pubId) {
+    try {
+        const snap = await getDoc(doc(db, "reports", `${pubId}_${user.uid}`));
+        return snap.exists();
+    } catch { return false; }
+}
+
+export async function reportRecipe(user, pubId, recipe, reason, details) {
+    const report = {
+        recipeId: pubId,
+        recipeTitle: recipe.title || "",
+        ownerId: recipe.ownerId || "",
+        ownerName: recipe.ownerName || "",
+        reporterId: user.uid,
+        reporterEmail: user.email || "",
+        reason,
+        details: details || "",
+        status: "new",
+        createdAt: new Date(),
+    };
+    // One report per person per recipe: the record is named after both.
+    await setDoc(doc(db, "reports", `${pubId}_${user.uid}`), report);
+
+    // Hide it from the reporter's suggestions right away.
+    await setDoc(doc(db, "profiles", user.uid, "prefs", "suggestions"),
+        { hidden: arrayUnion("pub:" + pubId), liked: arrayRemove("pub:" + pubId) }, { merge: true }).catch(() => {});
+
+    if (!REPORT_EMAIL_KEY) return;
+    const link = `${location.origin}/recipe.html?pub=${encodeURIComponent(pubId)}`;
+    try {
+        await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                access_key: REPORT_EMAIL_KEY,
+                subject: `Recipe reported: ${report.recipeTitle || "Untitled"}`,
+                from_name: "myonlyfoods",
+                replyto: report.reporterEmail,
+                Recipe: report.recipeTitle,
+                "Shared by": report.ownerName,
+                Reason: reason,
+                Details: report.details || "(none)",
+                "Reported by": report.reporterEmail,
+                "View recipe": link,
+                "Recipe ID": pubId,
+                "Owner ID": report.ownerId,
+            }),
+        });
+    } catch (err) {
+        // The report is already saved; the email is a bonus.
+        console.warn("Report email not sent:", err);
+    }
+}
+
 export function unpublishRecipe(recipeId) {
     return deleteDoc(doc(db, "publicRecipes", recipeId)).catch(() => {});
 }

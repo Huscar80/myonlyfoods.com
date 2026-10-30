@@ -623,3 +623,11 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
     .hero-landing { padding-top: 32px; }
 }
 .feature h3 .badge { font-family: var(--sans); }
+
+/* ---------- Report ---------- */
+.report-bar { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
+.report-link {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px;
+    background: none; border: none; color: var(--muted); font: 14px var(--sans); cursor: pointer;
+}
+.report-link:hover { color: var(--danger); text-decoration: underline; }

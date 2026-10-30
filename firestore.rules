@@ -30,6 +30,15 @@ service cloud.firestore {
       }
     }
 
+    // Reports. Anyone signed in can file one (one per recipe, in their own name)
+    // and see their own; only you can read them all, in the Firebase console.
+    match /reports/{reportId} {
+      allow read: if request.auth != null && resource.data.reporterId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.reporterId == request.auth.uid
+                    && reportId == request.resource.data.recipeId + "_" + request.auth.uid;
+    }
+
     // Everything else is closed.
     match /{document=**} {
       allow read, write: if false;

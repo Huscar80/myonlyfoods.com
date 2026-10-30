@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610292354">
+    <link rel="stylesheet" href="css/style.css?v=202610300117">
 </head>
 <body>
 <header id="site-header"></header>
@@ -14,8 +14,28 @@
     <div id="content"><p class="loading">Loading recipe…</p></div>
 </main>
 
+<dialog id="report-dialog" aria-labelledby="report-title">
+    <form class="dialog-body stack" id="report-form" novalidate style="gap: 14px;">
+        <h2 id="report-title" style="margin: 0;">Report this recipe</h2>
+        <p style="margin: 0; color: var(--text-soft);">Tell us what's wrong. The cook who shared it won't see who reported it.</p>
+        <div id="report-error" class="alert" role="alert" hidden></div>
+        <fieldset style="border: none; margin: 0; padding: 0;">
+            <legend style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Reason</legend>
+            <div id="report-reasons"></div>
+        </fieldset>
+        <div class="field">
+            <label for="report-details">More details <span class="help" style="display: inline;">(optional)</span></label>
+            <textarea class="input" id="report-details" rows="3" maxlength="1000"></textarea>
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" id="report-send">Send report</button>
+            <button type="button" class="btn btn-plain" id="report-cancel">Cancel</button>
+        </div>
+    </form>
+</dialog>
+
 <script type="module">
-    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast, unpublishRecipe, saveCopy, likeCount, isLiked, setLike, heartIcon } from "./js/firebase.js?v=202610292326";
+    import { db, storage, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, visibilityBadge, friendlyError, toast, unpublishRecipe, saveCopy, likeCount, isLiked, setLike, heartIcon, reportRecipe, alreadyReported, REPORT_REASONS } from "./js/firebase.js?v=202610300117";
     import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -68,6 +88,7 @@
             </div>`;
         render(r, actions);
         wireLike(sharedId);
+        wireReport(sharedId, data);
         document.getElementById("print-btn").addEventListener("click", () => window.print());
         document.getElementById("save-btn").addEventListener("click", async (e) => {
             const btn = e.currentTarget;
@@ -79,6 +100,59 @@
             } catch (err) {
                 toast(friendlyError(err));
                 btn.disabled = false;
+            }
+        });
+    }
+
+    // ---------- Report ----------
+    function wireReport(sharedId, data) {
+        const article = content.querySelector("article");
+        const bar = document.createElement("div");
+        bar.className = "report-bar no-print";
+        bar.innerHTML = `<button type="button" class="report-link" id="report-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>
+            Report this recipe</button>`;
+        article.after(bar);
+
+        const dlg = document.getElementById("report-dialog");
+        document.getElementById("report-reasons").innerHTML = REPORT_REASONS.map((r, i) =>
+            `<label class="check"><input type="radio" name="reason" value="${esc(r)}">${esc(r)}</label>`).join("");
+
+        document.getElementById("report-btn").addEventListener("click", async () => {
+            if (await alreadyReported(user, sharedId)) {
+                toast("You've already reported this recipe. Thanks for letting us know.");
+                return;
+            }
+            document.getElementById("report-form").reset();
+            document.getElementById("report-error").hidden = true;
+            dlg.showModal();
+        });
+        document.getElementById("report-cancel").addEventListener("click", () => dlg.close());
+
+        document.getElementById("report-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const err = document.getElementById("report-error");
+            const picked = document.querySelector('#report-form input[name="reason"]:checked');
+            if (!picked) {
+                err.textContent = "Please choose a reason.";
+                err.hidden = false;
+                return;
+            }
+            const btn = document.getElementById("report-send");
+            btn.disabled = true;
+            btn.textContent = "Sending…";
+            try {
+                await reportRecipe(user, sharedId, data, picked.value, document.getElementById("report-details").value.trim());
+                dlg.close();
+                bar.innerHTML = `<p class="help">Thanks. We've received your report and will take a look. This recipe won't be suggested to you again.</p>`;
+            } catch (e2) {
+                err.textContent = e2?.code === "permission-denied"
+                    ? "You've already reported this recipe, or reporting isn't set up yet."
+                    : friendlyError(e2);
+                err.hidden = false;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Send report";
             }
         });
     }
