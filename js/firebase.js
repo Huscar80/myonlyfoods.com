@@ -106,7 +106,7 @@ export function requireUser() {
 }
 
 export function logout() {
-    signOut(auth).then(() => window.location.replace("index.html"));
+    signOut(auth).then(() => window.location.replace("./"));
 }
 
 // ---------- Header ----------

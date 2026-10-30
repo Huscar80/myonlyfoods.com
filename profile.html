@@ -121,7 +121,7 @@
 </dialog>
 
 <script type="module">
-    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js?v=202610292323";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js?v=202610292326";
     import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -314,7 +314,7 @@
             await deleteDoc(profileRef);
 
             await deleteUser(user);
-            window.location.replace("index.html");
+            window.location.replace("./");
         } catch (err) {
             $("del-error").textContent = friendlyError(err);
             $("del-error").hidden = false;
