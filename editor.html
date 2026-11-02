@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202610300117">
+    <link rel="stylesheet" href="css/style.css?v=202611012337">
 </head>
 <body>
 <header id="site-header"></header>
@@ -150,9 +150,9 @@
 </dialog>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611012317";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611012337";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { readCard, parseRecipeText } from "./js/scan.js?v=202610300117";
+    import { readCard, parseRecipeText } from "./js/scan.js?v=202611012337";
 
     renderHeader("recipes");
     const $ = (id) => document.getElementById(id);
@@ -468,7 +468,10 @@
             console.warn("Sharing failed:", shareErr);
             if (visibility === "public") {
                 err.className = "alert";
-                err.innerHTML = `Your recipe was saved, but it couldn't be shared publicly yet. (The Firestore rules may need updating.) <a href="recipe.html?id=${encodeURIComponent(recipeRef.id)}">View your recipe</a>`;
+                const why = shareErr.code === "blocked"
+                    ? "This recipe was removed from public sharing by myonlyfoods, so it can't be made public again. It's still saved privately in your book."
+                    : "Your recipe was saved, but it couldn't be shared publicly yet. (The Firestore rules may need updating.)";
+                err.innerHTML = `${why} <a href="recipe.html?id=${encodeURIComponent(recipeRef.id)}">View your recipe</a>`;
                 err.hidden = false;
                 btn.disabled = false;
                 btn.textContent = "Save recipe";

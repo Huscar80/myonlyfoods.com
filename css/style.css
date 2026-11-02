@@ -631,3 +631,11 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
     background: none; border: none; color: var(--muted); font: 14px var(--sans); cursor: pointer;
 }
 .report-link:hover { color: var(--danger); text-decoration: underline; }
+
+/* ---------- Admin ---------- */
+.report-group.open { border-left: 4px solid var(--sale-text); }
+.report-list { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.report-list li { background: var(--cream); border-radius: 10px; padding: 12px 14px; }
+.report-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.report-details { margin: 6px 0; line-height: 1.5; color: var(--text-soft); font-style: italic; overflow-wrap: anywhere; }
+.tab .badge[hidden] { display: none; }

@@ -132,6 +132,28 @@ export function renderHeader(active) {
         </div>
       </div>`;
     document.getElementById("logout-btn").addEventListener("click", logout);
+
+    // Admins get an extra link to the reports page.
+    onAuthStateChanged(auth, async (user) => {
+        if (!user || !(await isAdmin(user))) return;
+        const nav = slot.querySelector(".main-nav");
+        if (nav.querySelector('[href="admin.html"]')) return;
+        const a = document.createElement("a");
+        a.href = "admin.html";
+        a.textContent = "Admin";
+        if (active === "admin") a.setAttribute("aria-current", "page");
+        nav.insertBefore(a, nav.querySelector(".soon"));
+    });
+}
+
+// ---------- Admin ----------
+// You're an admin if Firestore has a document for you in the "admins"
+// collection, named with your user ID. Add it by hand in the Firebase console.
+export async function isAdmin(user) {
+    try {
+        const snap = await getDoc(doc(db, "admins", user.uid));
+        return snap.exists();
+    } catch { return false; }
 }
 
 // ---------- Recipes ----------
@@ -181,6 +203,13 @@ export async function syncPublicRecipe(user, recipeId, data) {
     if (data.visibility !== "public") {
         await deleteDoc(ref).catch(() => {}); // fine if it was never shared
         return;
+    }
+    // A recipe an admin took down can't be shared again until it's restored.
+    const blocked = await getDoc(doc(db, "blocked", recipeId)).catch(() => null);
+    if (blocked && blocked.exists()) {
+        const e = new Error("This recipe was removed from public sharing.");
+        e.code = "blocked";
+        throw e;
     }
     let ownerName = user.displayName || "";
     try {
