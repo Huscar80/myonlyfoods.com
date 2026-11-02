@@ -99,10 +99,67 @@ export function requireUser() {
     return new Promise((resolve) => {
         const stop = onAuthStateChanged(auth, (user) => {
             stop();
-            if (user) resolve(user);
+            if (user) { resolve(user); checkTerms(user); }
             else window.location.replace("login.html");
         });
     });
+}
+
+// ---------- Terms ----------
+// Bump this date whenever terms.html or privacy.html change in an important way;
+// everyone will be asked to agree again the next time they visit.
+export const TERMS_VERSION = "2026-11-02";
+
+export function termsRecord() {
+    return { termsVersion: TERMS_VERSION, termsAcceptedAt: new Date() };
+}
+
+// Accounts that haven't agreed to the current terms get a one-time prompt.
+async function checkTerms(user) {
+    let accepted = null;
+    try {
+        const snap = await getDoc(doc(db, "profiles", user.uid));
+        accepted = snap.exists() ? snap.data().termsVersion : null;
+    } catch { return; } // don't lock anyone out over a network hiccup
+    if (accepted === TERMS_VERSION) return;
+
+    const dlg = document.createElement("dialog");
+    dlg.className = "terms-dialog";
+    dlg.setAttribute("aria-labelledby", "terms-d-title");
+    dlg.innerHTML = `
+      <form class="dialog-body stack" style="gap: 14px;" novalidate>
+        <h2 id="terms-d-title" style="margin: 0;">${accepted ? "We've updated our terms" : "Our terms and privacy policy"}</h2>
+        <p style="margin: 0; line-height: 1.6;">To keep using myonlyfoods, please read and agree to our
+          <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and
+          <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+        <label class="check"><input type="checkbox" id="terms-d-check"> I agree to the Terms of Service and Privacy Policy</label>
+        <div class="alert" role="alert" id="terms-d-error" hidden></div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" id="terms-d-agree">Agree and continue</button>
+          <button type="button" class="btn btn-plain" id="terms-d-logout">Log out</button>
+        </div>
+      </form>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener("cancel", (e) => e.preventDefault()); // Esc can't skip it
+    dlg.querySelector("#terms-d-logout").addEventListener("click", logout);
+    dlg.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const err = dlg.querySelector("#terms-d-error");
+        if (!dlg.querySelector("#terms-d-check").checked) {
+            err.textContent = "Please check the box to agree.";
+            err.hidden = false;
+            return;
+        }
+        try {
+            await setDoc(doc(db, "profiles", user.uid), termsRecord(), { merge: true });
+            dlg.close();
+            dlg.remove();
+        } catch (e2) {
+            err.textContent = friendlyError(e2);
+            err.hidden = false;
+        }
+    });
+    dlg.showModal();
 }
 
 export function logout() {

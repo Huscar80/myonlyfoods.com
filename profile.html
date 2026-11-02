@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611012337">
+    <link rel="stylesheet" href="css/style.css?v=202611020012">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
@@ -87,6 +87,7 @@
                 <button class="btn btn-plain" type="button" id="logout2">Log out</button>
                 <button class="btn btn-danger" type="button" id="delete-btn">Delete account</button>
             </div>
+            <p class="help" style="margin-top: 14px;"><a href="terms.html">Terms of Service</a> · <a href="privacy.html">Privacy Policy</a></p>
         </section>
     </div>
 </main>
@@ -121,7 +122,7 @@
 </dialog>
 
 <script type="module">
-    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js?v=202611012337";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js?v=202611020012";
     import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -306,7 +307,7 @@
                 if (d.data().visibility === "public") await unpublishRecipe(d.id);
                 await deleteDoc(d.ref);
             }
-            for (const sub of ["menu", "shopping"]) {
+            for (const sub of ["menu", "shopping", "prefs"]) {
                 const s = await getDocs(collection(db, "profiles", user.uid, sub));
                 for (const d of s.docs) await deleteDoc(d.ref);
             }

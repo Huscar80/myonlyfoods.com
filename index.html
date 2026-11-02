@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>myonlyfoods | Your recipe book, meal planner and kitchen community</title>
     <meta name="description" content="A free home for the recipes you love. Build your recipe book, plan your week with an automatic shopping list, and share your favorites with other home cooks.">
-    <link rel="stylesheet" href="css/style.css?v=202611012337">
+    <link rel="stylesheet" href="css/style.css?v=202611020012">
 </head>
 <body class="landing">
 
@@ -111,11 +111,11 @@
 
 <footer class="landing-footer">
     <span>© <span id="year">2026</span> myonlyfoods</span>
-    <span class="photo-credit">Food photos from <a href="https://unsplash.com" rel="noopener">Unsplash</a></span>
+    <span><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · Food photos from <a href="https://unsplash.com" rel="noopener">Unsplash</a></span>
 </footer>
 
 <script type="module">
-    import { auth } from "./js/firebase.js?v=202611012337";
+    import { auth } from "./js/firebase.js?v=202611020012";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     document.getElementById("year").textContent = new Date().getFullYear();

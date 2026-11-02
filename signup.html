@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create account | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611012337">
+    <link rel="stylesheet" href="css/style.css?v=202611020012">
 </head>
 <body>
 <main class="auth-body">
@@ -32,17 +32,22 @@
                 <label for="confirm">Confirm password</label>
                 <input class="input" type="password" id="confirm" autocomplete="new-password" required>
             </div>
+            <label class="check terms-check">
+                <input type="checkbox" id="agree" required>
+                <span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, and I'm at least 13 years old.</span>
+            </label>
             <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Create account</button>
         </form>
 
         <div class="auth-links">
             Already have an account? <a href="login.html">Sign in</a>
         </div>
+        <p class="legal-links"><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a></p>
     </div>
 </main>
 
 <script type="module">
-    import { auth, db, friendlyError } from "./js/firebase.js?v=202611012337";
+    import { auth, db, friendlyError, termsRecord } from "./js/firebase.js?v=202611020012";
     import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -66,6 +71,7 @@
         if (!name || !email || !password) return showError("Please fill in every field.");
         if (password.length < 6) return showError("Please use a password with at least 6 characters.");
         if (password !== confirm) return showError("The two passwords don't match.");
+        if (!document.getElementById("agree").checked) return showError("Please agree to the Terms of Service and Privacy Policy to create an account.");
 
         btn.disabled = true;
         btn.textContent = "Creating your account…";
@@ -73,7 +79,7 @@
             const cred = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(cred.user, { displayName: name });
             try {
-                await setDoc(doc(db, "profiles", cred.user.uid), { name, createdAt: new Date() }, { merge: true });
+                await setDoc(doc(db, "profiles", cred.user.uid), { name, createdAt: new Date(), ...termsRecord() }, { merge: true });
             } catch (profileErr) {
                 // The account exists either way; the name can be added later on the Profile page.
                 console.warn("Profile not saved:", profileErr);

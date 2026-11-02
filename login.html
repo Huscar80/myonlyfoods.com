@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611012337">
+    <link rel="stylesheet" href="css/style.css?v=202611020012">
 </head>
 <body>
 <main class="auth-body">
@@ -31,11 +31,12 @@
             <span aria-hidden="true" style="margin: 0 8px;">•</span>
             <a href="signup.html">Create an account</a>
         </div>
+        <p class="legal-links"><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a></p>
     </div>
 </main>
 
 <script type="module">
-    import { auth, friendlyError } from "./js/firebase.js?v=202611012337";
+    import { auth, friendlyError } from "./js/firebase.js?v=202611020012";
     import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Already signed in? Skip straight to the recipe book.
