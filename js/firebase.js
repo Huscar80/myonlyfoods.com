@@ -274,7 +274,7 @@ export const heartIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="
 // Get a free key at https://web3forms.com using the email that should receive
 // reports, then paste it here. Until then, reports are still saved, just not emailed.
 // The key is safe to have in public code; it only lets the site send email to you.
-export const REPORT_EMAIL_KEY = "";
+export const REPORT_EMAIL_KEY = "0181d2be-8b92-4e1c-8bc0-9020ed90d476";
 
 export const REPORT_REASONS = [
     "Offensive or inappropriate",
