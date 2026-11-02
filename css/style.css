@@ -684,3 +684,15 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
 .google-btn:focus-visible { outline: none; }
 .google-btn:focus-visible img { outline: 3px solid #7aa883; outline-offset: 2px; }
 .google-btn:disabled { opacity: .6; cursor: default; }
+
+/* ---------- Reordering steps ---------- */
+.step-tools { display: flex; gap: 2px; flex: none; margin-top: 2px; }
+.step-tools .icon-btn { width: 40px; height: 36px; }
+.step-tools .icon-btn:disabled { opacity: .3; cursor: default; background: none; }
+.step-row.moved textarea { animation: step-moved .6s ease; }
+@keyframes step-moved { from { background: var(--green-tint); } to { background: var(--white); } }
+@media (max-width: 520px) {
+    .step-row { flex-wrap: wrap; }
+    .step-row textarea { flex-basis: calc(100% - 50px); }
+    .step-tools { margin-left: 48px; margin-top: 0; }
+}

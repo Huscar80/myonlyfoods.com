@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021348">
+    <link rel="stylesheet" href="css/style.css?v=202611021438">
 </head>
 <body>
 <header id="site-header"></header>
@@ -230,11 +230,29 @@
     }
 
     function renumberSteps() {
-        [...$("steps").children].forEach((row, i) => {
+        const rows = [...$("steps").children];
+        rows.forEach((row, i) => {
             row.querySelector(".step-num").textContent = i + 1;
             row.querySelector("label").textContent = `Step ${i + 1}`;
-            row.querySelector(".icon-btn").setAttribute("aria-label", `Remove step ${i + 1}`);
+            row.querySelector(".step-remove").setAttribute("aria-label", `Remove step ${i + 1}`);
+            const up = row.querySelector(".step-up"), down = row.querySelector(".step-down");
+            up.setAttribute("aria-label", `Move step ${i + 1} up`);
+            down.setAttribute("aria-label", `Move step ${i + 1} down`);
+            up.disabled = i === 0;
+            down.disabled = i === rows.length - 1;
         });
+    }
+
+    // Moves a step one place up or down, keeping focus on the same button so
+    // it can be pressed again to keep moving.
+    function moveStep(row, dir, btnClass) {
+        const sibling = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+        if (!sibling) return;
+        if (dir < 0) sibling.before(row); else sibling.after(row);
+        renumberSteps();
+        row.classList.remove("moved"); void row.offsetWidth; row.classList.add("moved");
+        const btn = row.querySelector(btnClass);
+        (btn.disabled ? row.querySelector("textarea") : btn).focus();
     }
 
     function addStep(value = "", focus = false) {
@@ -245,9 +263,15 @@
           <span class="step-num" aria-hidden="true"></span>
           <label class="sr-only" for="${uid}"></label>
           <textarea class="input" id="${uid}" rows="2"></textarea>
-          <button type="button" class="icon-btn" style="margin-top: 4px;">${icons.trash}</button>`;
+          <div class="step-tools">
+            <button type="button" class="icon-btn step-up" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+            <button type="button" class="icon-btn step-down" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+            <button type="button" class="icon-btn step-remove" title="Remove">${icons.trash}</button>
+          </div>`;
         row.querySelector("textarea").value = value;
-        row.querySelector(".icon-btn").addEventListener("click", () => { row.remove(); renumberSteps(); });
+        row.querySelector(".step-remove").addEventListener("click", () => { row.remove(); renumberSteps(); });
+        row.querySelector(".step-up").addEventListener("click", () => moveStep(row, -1, ".step-up"));
+        row.querySelector(".step-down").addEventListener("click", () => moveStep(row, 1, ".step-down"));
         $("steps").appendChild(row);
         renumberSteps();
         if (focus) row.querySelector("textarea").focus();
