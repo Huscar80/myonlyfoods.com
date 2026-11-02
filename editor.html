@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611020012">
+    <link rel="stylesheet" href="css/style.css?v=202611021046">
 </head>
 <body>
 <header id="site-header"></header>
@@ -21,16 +21,51 @@
 
         <div id="error" class="alert" role="alert" hidden style="margin-bottom: 20px;"></div>
 
-        <section class="scan-banner" id="scan-banner" aria-labelledby="scan-h" hidden>
-            <div class="scan-icon" aria-hidden="true"></div>
-            <div style="flex: 1 1 240px; min-width: 0;">
-                <h2 id="scan-h">Have a recipe card?</h2>
-                <p>Snap a photo and we'll fill in what we can read. Works best on typed or printed cards with good light.</p>
+        <section class="scan-banner paste-banner" id="scan-banner" aria-labelledby="paste-h" hidden>
+            <div class="paste-head">
+                <div class="scan-icon" aria-hidden="true"></div>
+                <div style="flex: 1 1 240px; min-width: 0;">
+                    <h2 id="paste-h">Paste a recipe</h2>
+                    <p>Copy a recipe from a card, a website or a message, paste it here, and we'll fill in the form for you.</p>
+                </div>
+            </div>
+
+            <details class="paste-how">
+                <summary>How do I copy the text from a recipe card?</summary>
+                <div class="paste-how-body">
+                    <div>
+                        <h3>iPhone</h3>
+                        <ol>
+                            <li>Open the Camera, or a photo of the card in Photos.</li>
+                            <li>Press and hold on the writing until it highlights. (In the Camera, tap the text icon first.)</li>
+                            <li>Tap <strong>Select All</strong>, then <strong>Copy</strong>.</li>
+                        </ol>
+                    </div>
+                    <div>
+                        <h3>Android</h3>
+                        <ol>
+                            <li>Open a photo of the card in Google Photos, or open Google Lens.</li>
+                            <li>Tap <strong>Lens</strong>, then <strong>Text</strong>.</li>
+                            <li>Tap <strong>Select all</strong>, then <strong>Copy</strong>.</li>
+                        </ol>
+                    </div>
+                </div>
+                <p class="help">Tip: lay the card flat in good light, and get the whole card in the frame.</p>
+            </details>
+
+            <div class="field">
+                <label for="paste-text" class="sr-only">Recipe text to paste</label>
+                <textarea class="input" id="paste-text" rows="6" placeholder="Paste your recipe here…"></textarea>
             </div>
             <div class="actions">
-                <button type="button" class="btn btn-primary" id="scan-camera">Take a photo</button>
-                <button type="button" class="btn btn-secondary" id="scan-pick">Choose from photos</button>
+                <button type="button" class="btn btn-primary" id="paste-fill">Fill in recipe</button>
+                <button type="button" class="btn btn-plain" id="paste-clear">Clear</button>
             </div>
+
+            <p class="scan-alt">Or scan a photo with our basic reader (best for typed cards):
+                <button type="button" class="link-btn" id="scan-camera">Take a photo</button> ·
+                <button type="button" class="link-btn" id="scan-pick">Choose from photos</button>
+            </p>
             <!-- "capture" asks the phone to open its camera; the second one opens the photo library. -->
             <input type="file" id="scan-file-camera" accept="image/*" capture="environment" hidden>
             <input type="file" id="scan-file" accept="image/*" hidden>
@@ -42,7 +77,7 @@
                 <button type="button" class="btn btn-plain" id="scan-hide" style="min-height: 40px;">Hide</button>
             </div>
             <p class="help" id="scan-summary" style="margin: 8px 0 12px;"></p>
-            <details>
+            <details id="scan-details">
                 <summary>Show everything we read</summary>
                 <label for="scan-text" class="sr-only">Text read from the card</label>
                 <textarea class="input" id="scan-text" rows="8" readonly style="margin-top: 10px; font-size: 14px;"></textarea>
@@ -150,9 +185,9 @@
 </dialog>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611020012";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611021046";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { readCard, parseRecipeText } from "./js/scan.js?v=202611020012";
+    import { readCard, parseRecipeText } from "./js/scan.js?v=202611021046";
 
     renderHeader("recipes");
     const $ = (id) => document.getElementById(id);
@@ -310,13 +345,15 @@
 
     // ---------- Scan a recipe card ----------
     if (!existing) $("scan-banner").hidden = false;
-    $("scan-banner").querySelector(".scan-icon").innerHTML = icons.camera;
+    $("scan-banner").querySelector(".scan-icon").innerHTML =
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>';
     $("scan-camera").addEventListener("click", () => $("scan-file-camera").click());
     $("scan-pick").addEventListener("click", () => $("scan-file").click());
     $("scan-hide").addEventListener("click", () => { $("scan-result").hidden = true; });
 
     const isBlank = (container, sel) => [...container.querySelectorAll(sel)].every((el) => !el.value.trim());
 
+    const toastMsg = (m) => { $("error").className = "alert"; $("error").textContent = m; $("error").hidden = false; };
     const onScanFile = async (e) => {
         const file = e.target.files[0];
         e.target.value = "";
@@ -339,6 +376,11 @@
         }
         dlg.close();
 
+        fillFromText(text, file);
+    };
+
+    // Puts recipe text into the form. "file" is the card photo when it came from the scanner.
+    function fillFromText(text, file = null) {
         const found = parseRecipeText(text);
         const filled = [];
         if (found.title && !$("title").value.trim()) { $("title").value = found.title; filled.push("the name"); }
@@ -355,18 +397,31 @@
             found.steps.forEach((st) => addStep(st));
             filled.push(`${found.steps.length} step${found.steps.length === 1 ? "" : "s"}`);
         }
-        // Keep the card itself as the photo, so the original is always there to check.
-        if (!photoFile && !photoURL) { pickFile(file); filled.push("the card as the photo"); }
+        // From the scanner, keep the card itself as the photo so the original is always there to check.
+        if (file && !photoFile && !photoURL) { pickFile(file); filled.push("the card as the photo"); }
 
+        const fromPaste = !file;
         $("scan-text").value = text.trim();
+        $("scan-details").hidden = fromPaste; // pasted text is still in the paste box
         $("scan-summary").textContent = text.trim()
             ? (filled.length
-                ? `We filled in ${filled.join(", ")}. Please check everything below, since the reader can mix things up. Anything it missed is in the full text.`
-                : "We read some text but couldn't tell what's what. Copy what you need from the full text below.")
+                ? `We filled in ${filled.join(", ")}. Please check everything below, since we may have put a line in the wrong place.` + (fromPaste ? "" : " Anything we missed is in the full text.")
+                : "We couldn't tell what's what in that text. " + (fromPaste ? "Try copying the recipe again with each ingredient on its own line." : "Copy what you need from the full text below."))
             : "We couldn't find any text in that photo. Try again in brighter light, with the card filling the frame.";
         $("scan-result").hidden = false;
         $("scan-result").scrollIntoView({ behavior: "smooth", block: "start" });
-    };
+    }
+
+    $("paste-fill").addEventListener("click", () => {
+        const text = $("paste-text").value;
+        if (!text.trim()) {
+            $("paste-text").focus();
+            toastMsg("Paste a recipe into the box first.");
+            return;
+        }
+        fillFromText(text);
+    });
+    $("paste-clear").addEventListener("click", () => { $("paste-text").value = ""; $("paste-text").focus(); });
     $("scan-file-camera").addEventListener("change", onScanFile);
     $("scan-file").addEventListener("change", onScanFile);
 

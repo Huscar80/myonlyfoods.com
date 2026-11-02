@@ -71,7 +71,7 @@ const NOISE = /^(recipe|from the (kitchen|desk) of.*|recipe for|title)\s*:?\s*$/
 function clean(line) {
     return line
         .replace(/[|_~`^]+/g, " ")          // stray marks the reader picks up from card lines
-        .replace(/^[\s•·*\-–—>]+/, "")      // bullets
+        .replace(/^[\s•·*\-–—>▢☐□◻✓✔○●◦▪▫]+/, "")      // bullets and the checkboxes recipe websites add
         .replace(/\s{2,}/g, " ")
         .trim();
 }
@@ -82,6 +82,7 @@ function looksLikeIngredient(line, inList = false) {
     const words = line.split(" ").length;
     if (line.length > 70) return false;
     if (/[.!]$/.test(line) && words > 3) return false; // full sentences are steps
+    if (/^(step\s*)?\d+\s*[.):]\s+\D/i.test(line)) return false; // "1. Mix…" is a numbered step, not "1.5 cups"
     if (AMOUNT_START.test(line)) return true;
     if (HAS_UNIT.test(line) && words <= 8) return true;
     return inList && words <= 6;
