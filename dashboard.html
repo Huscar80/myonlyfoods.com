@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Recipe Book | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021609">
+    <link rel="stylesheet" href="css/style.css?v=202611021613">
 </head>
 <body>
 <header id="site-header"></header>
@@ -39,7 +39,7 @@
 </main>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, visibilityBadge, friendlyError, likeCount, likePill } from "./js/firebase.js?v=202611021609";
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, normalizeRecipe, totalTime, visibilityBadge, friendlyError, likeCount, likePill } from "./js/firebase.js?v=202611021613";
     import { collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     renderHeader("recipes");
@@ -140,7 +140,7 @@
                 <div class="body">
                   <span class="eyebrow">${esc(r.category)}${sub}</span>
                   <h3>${esc(r.title)}</h3>
-                  <div class="meta"><span>${esc(meta)}</span><span style="display:flex; gap:6px; align-items:center;">${r.visibility === "public" && likes[r.id] ? likePill(likes[r.id], true) : ""}${visibilityBadge(r)}</span></div>
+                  <div class="meta"><span>${esc(meta)}</span><span style="display:flex; gap:6px; align-items:center;">${r.videoUrl ? '<span class="badge badge-video" title="Has a how-to video">▶ Video</span>' : ""}${r.visibility === "public" && likes[r.id] ? likePill(likes[r.id], true) : ""}${visibilityBadge(r)}</span></div>
                 </div>
               </a>`;
         }).join("");

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021609">
+    <link rel="stylesheet" href="css/style.css?v=202611021613">
 </head>
 <body>
 <header id="site-header"></header>
@@ -141,6 +141,16 @@
                     <button type="button" class="btn btn-dashed" id="add-step">+ Add step</button>
                 </section>
 
+                <section class="card stack" aria-labelledby="video-h" style="gap: 12px;">
+                    <h2 id="video-h" style="margin: 0;">How-to video <span class="help" style="display:inline; font-family: var(--sans);">(optional)</span></h2>
+                    <div class="field">
+                        <label for="videoUrl">Paste a YouTube or Vimeo link</label>
+                        <input class="input" id="videoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" aria-describedby="video-help">
+                        <p class="help" id="video-help">Upload your video to YouTube or Vimeo first (set it to Public or Unlisted), then copy its link here. YouTube Shorts work too.</p>
+                    </div>
+                    <div id="video-preview"></div>
+                </section>
+
                 <section class="card" aria-labelledby="notes-h">
                     <h2 id="notes-h"><label for="notes">Cook's notes</label> <span class="help" style="display:inline; font-family: var(--sans);">(optional)</span></h2>
                     <textarea class="input" id="notes" rows="3" placeholder="Swaps, tips, how to store leftovers…"></textarea>
@@ -185,9 +195,9 @@
 </dialog>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611021609";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, parseVideoUrl, videoEmbedHtml, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611021613";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { readCard, parseRecipeText } from "./js/scan.js?v=202611021609";
+    import { readCard, parseRecipeText } from "./js/scan.js?v=202611021613";
 
     renderHeader("recipes");
     const $ = (id) => document.getElementById(id);
@@ -344,6 +354,7 @@
         $("cookTime").value = existing.cookTime;
         $("servings").value = existing.servings;
         $("notes").value = existing.notes;
+        $("videoUrl").value = existing.videoUrl;
         $("price").value = existing.price;
         photoURL = existing.photoURL;
     }
@@ -366,6 +377,18 @@
     $("collections").innerHTML = allCollections.length
         ? allCollections.map((c, i) => `<label class="check"><input type="checkbox" value="${esc(c)}" ${r.collections.includes(c) ? "checked" : ""}>${esc(c)}</label>`).join("")
         : `<p class="help">No collections yet.</p>`;
+
+    // ---------- How-to video ----------
+    function showVideoPreview() {
+        const raw = $("videoUrl").value.trim();
+        const box = $("video-preview");
+        if (!raw) { box.innerHTML = ""; return; }
+        const html = videoEmbedHtml(raw, "Video preview");
+        box.innerHTML = html || `<p class="alert" role="alert" style="margin: 0;">That doesn't look like a YouTube or Vimeo video link. Open the video, use its <strong>Share</strong> button, and copy the link from there.</p>`;
+    }
+    $("videoUrl").addEventListener("change", showVideoPreview);
+    $("videoUrl").addEventListener("paste", () => setTimeout(showVideoPreview, 0));
+    showVideoPreview();
 
     // ---------- Scan a recipe card ----------
     if (!existing) $("scan-banner").hidden = false;
@@ -462,6 +485,13 @@
             $("title").focus();
             return;
         }
+        const videoRaw = $("videoUrl").value.trim();
+        if (videoRaw && !parseVideoUrl(videoRaw)) {
+            err.textContent = "The how-to video link isn't a YouTube or Vimeo video link. Fix it or clear it, then save.";
+            err.hidden = false;
+            $("videoUrl").focus();
+            return;
+        }
         let price = $("price").value.trim().replace(/^\$/, "");
         if (visibility === "sale") {
             if (!/^\d+(\.\d{1,2})?$/.test(price) || Number(price) <= 0) {
@@ -493,6 +523,7 @@
             steps,
             instructions: steps.join("\n"), // kept so older pages and the meal planner still work
             notes: $("notes").value.trim(),
+            videoUrl: $("videoUrl").value.trim(),
             collections,
             visibility,
             price,

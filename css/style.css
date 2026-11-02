@@ -709,3 +709,10 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
 .fb-btn[hidden] { display: none; }
 .legal ol { padding-left: 22px; }
 .legal ol li { line-height: 1.7; color: var(--text-soft); margin-bottom: 6px; }
+
+/* ---------- How-to videos ---------- */
+.video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #1f1f1f; }
+.video-frame.tall { aspect-ratio: 9 / 16; max-width: 340px; }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-section { margin-top: 36px; }
+.badge-video { background: #1f1f1f; color: #fff; }

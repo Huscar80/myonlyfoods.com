@@ -286,6 +286,7 @@ export function normalizeRecipe(id, data) {
         cookTime: d.cookTime || "",
         servings: d.servings || "",
         photoURL: d.photoURL || "",
+        videoUrl: d.videoUrl || "",
         collections: Array.isArray(d.collections) ? d.collections : [],
         visibility: d.visibility || "private",
         price: d.price || "",
@@ -329,6 +330,7 @@ export async function syncPublicRecipe(user, recipeId, data) {
         steps: data.steps || [],
         notes: data.notes || "",
         photoURL: data.photoURL || "",
+        videoUrl: data.videoUrl || "",
         updatedAt: new Date(),
     });
 }
@@ -350,6 +352,7 @@ export async function saveCopy(user, pubId, pub) {
         instructions: (pub.steps || []).join("\n"),
         notes: pub.notes || "",
         photoURL: pub.photoURL || "",
+        videoUrl: pub.videoUrl || "",
         collections: [],
         visibility: "private",
         price: "",
@@ -481,6 +484,58 @@ export function visibilityBadge(r) {
     }
     if (r.visibility === "public") return '<span class="badge badge-public">Public</span>';
     return '<span class="badge badge-private">Private</span>';
+}
+
+// ---------- How-to videos ----------
+// People paste a YouTube or Vimeo link. We only ever build the player address
+// ourselves from the video's ID, never use the pasted text directly.
+function toSeconds(t) {
+    if (!t) return 0;
+    if (/^\d+$/.test(t)) return Number(t);
+    const m = String(t).match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+    return m ? (Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3] || 0)) : 0;
+}
+
+export function parseVideoUrl(raw) {
+    let url;
+    try { url = new URL(String(raw || "").trim()); } catch { return null; }
+    if (!/^https?:$/.test(url.protocol)) return null;
+    const host = url.hostname.replace(/^(www\.|m\.)/, "");
+    const ytId = /^[A-Za-z0-9_-]{11}$/;
+    if (host === "youtu.be" || host === "youtube.com" || host === "youtube-nocookie.com") {
+        let id = "", tall = false;
+        if (host === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+        else if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
+        else {
+            const m = url.pathname.match(/^\/(shorts|embed|live|v)\/([^/?#]+)/);
+            if (m) { id = m[2]; tall = m[1] === "shorts"; }
+        }
+        if (!ytId.test(id)) return null;
+        return { provider: "youtube", id, tall, start: toSeconds(url.searchParams.get("t") || url.searchParams.get("start")) };
+    }
+    if (host === "vimeo.com" || host === "player.vimeo.com") {
+        const m = url.pathname.match(/(?:^|\/)(?:video\/)?(\d{6,12})(?:\/([0-9a-f]{6,20}))?/);
+        if (!m) return null;
+        const hash = m[2] || url.searchParams.get("h") || "";
+        return { provider: "vimeo", id: m[1], hash: /^[0-9a-f]{6,20}$/.test(hash) ? hash : "", tall: false, start: 0 };
+    }
+    return null;
+}
+
+// Returns the HTML for a responsive video player, or "" if the link isn't supported.
+export function videoEmbedHtml(raw, title = "How-to video") {
+    const v = parseVideoUrl(raw);
+    if (!v) return "";
+    let src;
+    if (v.provider === "youtube") {
+        // youtube-nocookie.com is YouTube's privacy-enhanced mode.
+        src = `https://www.youtube-nocookie.com/embed/${v.id}?rel=0${v.start ? `&start=${v.start}` : ""}`;
+    } else {
+        src = `https://player.vimeo.com/video/${v.id}?dnt=1${v.hash ? `&h=${v.hash}` : ""}`;
+    }
+    return `<div class="video-frame${v.tall ? " tall" : ""}"><iframe src="${esc(src)}" title="${esc(title)}" loading="lazy"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
 }
 
 // ---------- Photos ----------
