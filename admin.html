@@ -34,12 +34,6 @@
     const content = $("content");
     const user = await requireUser();
 
-    // Only admins can use this page; everyone else goes to their Home page.
-    if (!(await isAdmin(user))) {
-        window.location.replace("home.html");
-    } else {
-        await showReports();
-    }
 
     // ---------- Reports ----------
     let filter = "new";
@@ -180,6 +174,14 @@
             toast(`${g.owner || "The cook"} can share "${g.title}" again by saving it as Public.`);
             showReports();
         } catch (err) { toast(friendlyError(err)); }
+    }
+
+    // Only admins can use this page; everyone else goes to their Home page.
+    // (This runs last so everything above is set up first.)
+    if (!(await isAdmin(user))) {
+        window.location.replace("home.html");
+    } else {
+        await showReports();
     }
 </script>
 </body>
