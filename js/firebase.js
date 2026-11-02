@@ -202,7 +202,7 @@ export function renderHeader(active) {
     slot.className = "site-header";
     slot.innerHTML = `
       <div class="inner">
-        <a class="brand" href="home.html"><img src="images/mainlogo.jpg" alt="">myonlyfoods</a>
+        <a class="brand" href="home.html"><img src="images/logo-icon.png" alt="">myonlyfoods</a>
         <nav class="main-nav" aria-label="Main">
           <a href="home.html"${cur("home")}>Home</a>
           <a href="dashboard.html"${cur("recipes")}>My recipes</a>
