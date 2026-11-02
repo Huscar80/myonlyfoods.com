@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021438">
+    <link rel="stylesheet" href="css/style.css?v=202611021609">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
@@ -76,7 +76,7 @@
             <h2 id="acct-h" style="margin: 0 0 6px;">Account</h2>
             <div class="acct-row"><div><div class="k">Email</div><div class="v" id="a-email"></div></div></div>
             <div class="acct-row" id="signin-row" hidden>
-                <div><div class="k">Sign-in</div><div class="v">With your Google account</div></div>
+                <div><div class="k">Sign-in</div><div class="v" id="signin-with">With your Google account</div></div>
             </div>
             <div class="acct-row" id="pw-row">
                 <div><div class="k">Password</div><div class="v">••••••••</div></div>
@@ -113,7 +113,7 @@
         <h2 id="del-title" style="margin: 0;">Delete your account?</h2>
         <p style="margin: 0; line-height: 1.6;">This permanently deletes your profile, every recipe and photo in your book, and your meal plan. It can't be undone.</p>
         <div id="del-error" class="alert" role="alert" hidden></div>
-        <p id="del-google-note" class="help" hidden style="font-size: 14px;">To confirm, you'll be asked to sign in with Google one more time.</p>
+        <p id="del-google-note" class="help" hidden style="font-size: 14px;">To confirm, you'll be asked to sign in with <span id="del-provider">Google</span> one more time.</p>
         <div class="field" id="del-pw-field">
             <label for="del-pw">Enter your password to confirm</label>
             <input class="input" type="password" id="del-pw" autocomplete="current-password">
@@ -126,9 +126,9 @@
 </dialog>
 
 <script type="module">
-    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe, usesGoogle, usesPassword } from "./js/firebase.js?v=202611021348";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe, usesGoogle, usesFacebook, usesPassword } from "./js/firebase.js?v=202611021609";
     import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, GoogleAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, GoogleAuthProvider, FacebookAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     renderHeader("profile");
@@ -273,7 +273,11 @@
 
     // ---------- Account ----------
     // Google-only accounts have no password to change or type in.
-    const googleOnly = usesGoogle(user) && !usesPassword(user);
+    // "googleOnly" here means: signs in with Google or Facebook, and has no password.
+    const googleOnly = (usesGoogle(user) || usesFacebook(user)) && !usesPassword(user);
+    const providerName = usesGoogle(user) ? "Google" : "Facebook";
+    $("signin-with").textContent = `With your ${providerName} account`;
+    $("del-provider").textContent = providerName;
     $("pw-row").hidden = googleOnly;
     $("signin-row").hidden = !googleOnly;
     $("del-pw-field").hidden = googleOnly;
@@ -310,7 +314,7 @@
         btn.textContent = "Deleting…";
         try {
             // Firebase asks for the password again before deleting an account.
-            if (googleOnly) await reauthenticateWithPopup(user, new GoogleAuthProvider());
+            if (googleOnly) await reauthenticateWithPopup(user, usesGoogle(user) ? new GoogleAuthProvider() : new FacebookAuthProvider());
             else await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
 
             const recipeSnap = await getDocs(collection(db, "profiles", user.uid, "recipes"));

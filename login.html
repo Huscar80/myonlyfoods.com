@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021438">
+    <link rel="stylesheet" href="css/style.css?v=202611021609">
 </head>
 <body>
 <main class="auth-body">
@@ -16,6 +16,9 @@
         <div id="error" class="alert" role="alert" hidden style="margin-bottom: 16px;"></div>
         <button type="button" class="google-btn" id="googleBtn">
             <img src="images/google-signin.svg" alt="Sign in with Google" width="198" height="44">
+        </button>
+        <button type="button" class="fb-btn" id="facebookBtn" hidden>
+            <span>Continue with Facebook</span>
         </button>
         <div class="or-divider" aria-hidden="true"><span>or sign in with email</span></div>
 
@@ -41,7 +44,7 @@
 </main>
 
 <script type="module">
-    import { auth, friendlyError, signInWithGoogle } from "./js/firebase.js?v=202611021348";
+    import { auth, friendlyError, signInWithGoogle, signInWithFacebook, FACEBOOK_ENABLED } from "./js/firebase.js?v=202611021609";
     import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Already signed in? Skip straight to the recipe book.
@@ -53,6 +56,23 @@
     const form = document.getElementById("loginForm");
     const errorBox = document.getElementById("error");
     const btn = document.getElementById("submitBtn");
+
+    if (FACEBOOK_ENABLED) {
+        const fb = document.getElementById("facebookBtn");
+        fb.hidden = false;
+        fb.addEventListener("click", async () => {
+            errorBox.hidden = true;
+            fb.disabled = true;
+            try {
+                await signInWithFacebook();
+                window.location.replace("home.html");
+            } catch (err) {
+                const msg = friendlyError(err);
+                if (msg) { errorBox.textContent = msg; errorBox.hidden = false; }
+                fb.disabled = false;
+            }
+        });
+    }
 
     document.getElementById("googleBtn").addEventListener("click", async (e) => {
         const g = e.currentTarget;

@@ -1,6 +1,6 @@
 // myonlyfoods — shared Firebase setup and page helpers
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getCountFromServer, arrayUnion, arrayRemove, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -93,7 +93,7 @@ export function friendlyError(error) {
         "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow pop-ups for myonlyfoods.com and try again.",
         "auth/unauthorized-domain": "Google sign-in isn't set up for this website address yet. (Add it under Firebase → Authentication → Settings → Authorized domains.)",
         "auth/operation-not-allowed": "That sign-in method isn't turned on yet.",
-        "auth/account-exists-with-different-credential": "There's already an account with that email. Sign in with your email and password instead.",
+        "auth/account-exists-with-different-credential": "You already have an account with that email address, using a different way to sign in (like Google, or email and password). Please sign in that way instead.",
         "auth/user-mismatch": "That's a different Google account than the one you're signed in with.",
         "auth/requires-recent-login": "For your security, please sign in again and then try that.",
     };
@@ -170,12 +170,26 @@ async function checkTerms(user) {
     dlg.showModal();
 }
 
+// Turn the Facebook button on once the Facebook app is set up and added in
+// Firebase (Authentication → Sign-in method → Facebook).
+export const FACEBOOK_ENABLED = false;
+
 // Sign in (or sign up) with a Google account. If this is a new account, a profile is
 // created from the Google name. "agreed" records that they accepted the terms.
 export async function signInWithGoogle({ agreed = false } = {}) {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    const cred = await signInWithPopup(auth, provider);
+    return finishSocialSignIn(await signInWithPopup(auth, provider), agreed);
+}
+
+// Same, with a Facebook account.
+export async function signInWithFacebook({ agreed = false } = {}) {
+    const provider = new FacebookAuthProvider();
+    provider.addScope("email");
+    return finishSocialSignIn(await signInWithPopup(auth, provider), agreed);
+}
+
+async function finishSocialSignIn(cred, agreed) {
     const profileRef = doc(db, "profiles", cred.user.uid);
     const snap = await getDoc(profileRef).catch(() => null);
     const data = {};
@@ -187,6 +201,7 @@ export async function signInWithGoogle({ agreed = false } = {}) {
 }
 
 export const usesGoogle = (user) => user.providerData.some((p) => p.providerId === "google.com");
+export const usesFacebook = (user) => user.providerData.some((p) => p.providerId === "facebook.com");
 export const usesPassword = (user) => user.providerData.some((p) => p.providerId === "password");
 
 export function logout() {
