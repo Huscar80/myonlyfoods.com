@@ -34,32 +34,9 @@
     const content = $("content");
     const user = await requireUser();
 
-    // ---------- Not an admin yet: show how to become one ----------
+    // Only admins can use this page; everyone else goes to their Home page.
     if (!(await isAdmin(user))) {
-        content.innerHTML = `
-          <h1 class="page-title" style="margin-bottom: 20px;">Admin</h1>
-          <section class="card stack" style="gap: 14px; max-width: 680px;">
-            <h2 style="margin: 0;">This page is for site admins</h2>
-            <p style="margin: 0; line-height: 1.6;">If you run myonlyfoods, you can make this account an admin in the Firebase console:</p>
-            <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
-              <li>Go to <strong>Firestore Database → Data</strong>.</li>
-              <li>Click <strong>+ Start collection</strong> and name it <code>admins</code>. (If <code>admins</code> already exists, open it and click <strong>+ Add document</strong>.)</li>
-              <li>For <strong>Document ID</strong>, paste your user ID below.</li>
-              <li>Add one field: <code>role</code>, type string, value <code>owner</code>. Then click <strong>Save</strong>.</li>
-              <li>Reload this page.</li>
-            </ol>
-            <div class="field">
-              <label for="uid">Your user ID</label>
-              <div style="display: flex; gap: 8px;">
-                <input class="input" id="uid" type="text" readonly value="${esc(user.uid)}" style="font-family: ui-monospace, monospace; font-size: 14px;">
-                <button type="button" class="btn btn-secondary" id="copy-uid">Copy</button>
-              </div>
-            </div>
-          </section>`;
-        $("copy-uid").addEventListener("click", async () => {
-            try { await navigator.clipboard.writeText(user.uid); toast("User ID copied"); }
-            catch { $("uid").select(); }
-        });
+        window.location.replace("home.html");
     } else {
         await showReports();
     }
