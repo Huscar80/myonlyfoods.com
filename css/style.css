@@ -675,3 +675,12 @@ dialog::backdrop { background: rgba(20, 30, 22, .55); }
 .google-terms { margin: 10px 0 0; text-align: center; font-size: 12px; line-height: 1.5; }
 .or-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--muted); font-size: 13px; }
 .or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.google-btn {
+    display: flex; justify-content: center; width: 100%; padding: 0; margin: 0;
+    background: none; border: none; cursor: pointer; border-radius: 999px;
+}
+.google-btn img { height: 44px; width: auto; display: block; border-radius: 999px; transition: box-shadow .15s; }
+.google-btn:hover img { box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.google-btn:focus-visible { outline: none; }
+.google-btn:focus-visible img { outline: 3px solid #7aa883; outline-offset: 2px; }
+.google-btn:disabled { opacity: .6; cursor: default; }
