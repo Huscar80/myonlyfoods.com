@@ -1,6 +1,6 @@
 // myonlyfoods — shared Firebase setup and page helpers
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getCountFromServer, arrayUnion, arrayRemove, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -88,6 +88,14 @@ export function friendlyError(error) {
         "auth/network-request-failed": "Couldn't reach the server. Check your internet connection.",
         "permission-denied": "You don't have permission to do that. (The Firebase security rules may need updating.)",
         "storage/unauthorized": "Photo upload isn't allowed right now. Check Firebase Storage is turned on.",
+        "auth/popup-closed-by-user": "",
+        "auth/cancelled-popup-request": "",
+        "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow pop-ups for myonlyfoods.com and try again.",
+        "auth/unauthorized-domain": "Google sign-in isn't set up for this website address yet. (Add it under Firebase → Authentication → Settings → Authorized domains.)",
+        "auth/operation-not-allowed": "That sign-in method isn't turned on yet.",
+        "auth/account-exists-with-different-credential": "There's already an account with that email. Sign in with your email and password instead.",
+        "auth/user-mismatch": "That's a different Google account than the one you're signed in with.",
+        "auth/requires-recent-login": "For your security, please sign in again and then try that.",
     };
     return map[code] || "Something went wrong. Please try again.";
 }
@@ -161,6 +169,25 @@ async function checkTerms(user) {
     });
     dlg.showModal();
 }
+
+// Sign in (or sign up) with a Google account. If this is a new account, a profile is
+// created from the Google name. "agreed" records that they accepted the terms.
+export async function signInWithGoogle({ agreed = false } = {}) {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const cred = await signInWithPopup(auth, provider);
+    const profileRef = doc(db, "profiles", cred.user.uid);
+    const snap = await getDoc(profileRef).catch(() => null);
+    const data = {};
+    if (!snap || !snap.exists() || !snap.data().name) data.name = cred.user.displayName || "";
+    if (!snap || !snap.exists()) data.createdAt = new Date();
+    if (agreed) Object.assign(data, termsRecord());
+    if (Object.keys(data).length) await setDoc(profileRef, data, { merge: true }).catch(() => {});
+    return cred.user;
+}
+
+export const usesGoogle = (user) => user.providerData.some((p) => p.providerId === "google.com");
+export const usesPassword = (user) => user.providerData.some((p) => p.providerId === "password");
 
 export function logout() {
     signOut(auth).then(() => window.location.replace("./"));

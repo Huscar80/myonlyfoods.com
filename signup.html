@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create account | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021046">
+    <link rel="stylesheet" href="css/style.css?v=202611021122">
 </head>
 <body>
 <main class="auth-body">
@@ -13,8 +13,15 @@
         <h1>Join the table</h1>
         <p>Create a free account and start your recipe book.</p>
 
+        <div id="error" class="alert" role="alert" hidden style="margin-bottom: 16px;"></div>
+        <button type="button" class="btn btn-google btn-block" id="googleBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+            Continue with Google
+        </button>
+        <p class="help google-terms">By continuing with Google, you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, and confirm you're at least 13.</p>
+        <div class="or-divider" aria-hidden="true"><span>or sign up with email</span></div>
+
         <form id="signupForm" novalidate>
-            <div id="error" class="alert" role="alert" hidden></div>
             <div class="field">
                 <label for="fullname">Your name</label>
                 <input class="input" type="text" id="fullname" autocomplete="name" required>
@@ -47,7 +54,7 @@
 </main>
 
 <script type="module">
-    import { auth, db, friendlyError, termsRecord } from "./js/firebase.js?v=202611021046";
+    import { auth, db, friendlyError, termsRecord, signInWithGoogle } from "./js/firebase.js?v=202611021122";
     import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -59,6 +66,20 @@
         errorBox.textContent = msg;
         errorBox.hidden = false;
     }
+
+    document.getElementById("googleBtn").addEventListener("click", async (e) => {
+        const g = e.currentTarget;
+        errorBox.hidden = true;
+        g.disabled = true;
+        try {
+            await signInWithGoogle({ agreed: true });
+            window.location.replace("home.html");
+        } catch (err) {
+            const msg = friendlyError(err);
+            if (msg) showError(msg);
+            g.disabled = false;
+        }
+    });
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();

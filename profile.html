@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021046">
+    <link rel="stylesheet" href="css/style.css?v=202611021122">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
@@ -75,7 +75,10 @@
         <section class="card side" aria-labelledby="acct-h" style="flex-basis: 340px;">
             <h2 id="acct-h" style="margin: 0 0 6px;">Account</h2>
             <div class="acct-row"><div><div class="k">Email</div><div class="v" id="a-email"></div></div></div>
-            <div class="acct-row">
+            <div class="acct-row" id="signin-row" hidden>
+                <div><div class="k">Sign-in</div><div class="v">With your Google account</div></div>
+            </div>
+            <div class="acct-row" id="pw-row">
                 <div><div class="k">Password</div><div class="v">••••••••</div></div>
                 <button class="btn btn-secondary" type="button" id="pw-btn" style="min-height: 40px; font-size: 14px;">Change</button>
             </div>
@@ -110,7 +113,8 @@
         <h2 id="del-title" style="margin: 0;">Delete your account?</h2>
         <p style="margin: 0; line-height: 1.6;">This permanently deletes your profile, every recipe and photo in your book, and your meal plan. It can't be undone.</p>
         <div id="del-error" class="alert" role="alert" hidden></div>
-        <div class="field">
+        <p id="del-google-note" class="help" hidden style="font-size: 14px;">To confirm, you'll be asked to sign in with Google one more time.</p>
+        <div class="field" id="del-pw-field">
             <label for="del-pw">Enter your password to confirm</label>
             <input class="input" type="password" id="del-pw" autocomplete="current-password">
         </div>
@@ -122,9 +126,9 @@
 </dialog>
 
 <script type="module">
-    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe } from "./js/firebase.js?v=202611021046";
+    import { auth, db, storage, requireUser, renderHeader, esc, uploadImage, friendlyError, toast, logout, normalizeRecipe, unpublishRecipe, usesGoogle, usesPassword } from "./js/firebase.js?v=202611021122";
     import { doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, GoogleAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     renderHeader("profile");
@@ -268,6 +272,13 @@
     });
 
     // ---------- Account ----------
+    // Google-only accounts have no password to change or type in.
+    const googleOnly = usesGoogle(user) && !usesPassword(user);
+    $("pw-row").hidden = googleOnly;
+    $("signin-row").hidden = !googleOnly;
+    $("del-pw-field").hidden = googleOnly;
+    $("del-google-note").hidden = !googleOnly;
+
     $("pw-btn").addEventListener("click", async () => {
         try {
             await sendPasswordResetEmail(auth, user.email);
@@ -282,7 +293,7 @@
         $("del-error").hidden = true;
         $("del-pw").value = "";
         $("delete-dialog").showModal();
-        $("del-pw").focus();
+        if (!googleOnly) $("del-pw").focus();
     });
     $("del-cancel").addEventListener("click", () => $("delete-dialog").close());
 
@@ -290,7 +301,7 @@
         e.preventDefault();
         const btn = $("del-confirm");
         const pw = $("del-pw").value;
-        if (!pw) {
+        if (!googleOnly && !pw) {
             $("del-error").textContent = "Please enter your password.";
             $("del-error").hidden = false;
             return;
@@ -299,7 +310,8 @@
         btn.textContent = "Deleting…";
         try {
             // Firebase asks for the password again before deleting an account.
-            await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+            if (googleOnly) await reauthenticateWithPopup(user, new GoogleAuthProvider());
+            else await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
 
             const recipeSnap = await getDocs(collection(db, "profiles", user.uid, "recipes"));
             for (const d of recipeSnap.docs) {
@@ -317,7 +329,7 @@
             await deleteUser(user);
             window.location.replace("./");
         } catch (err) {
-            $("del-error").textContent = friendlyError(err);
+            $("del-error").textContent = friendlyError(err) || "Your account wasn't deleted.";
             $("del-error").hidden = false;
             btn.disabled = false;
             btn.textContent = "Delete everything";
