@@ -223,7 +223,7 @@ export function renderHeader(active) {
           <a href="dashboard.html"${cur("recipes")}>My recipes</a>
           <a href="planner.html"${cur("planner")}>Meal plan</a>
           <a href="profile.html"${cur("profile")}>Profile</a>
-          <span class="soon">Browse <span class="badge badge-soon">Soon</span></span>
+          <a href="browse.html"${cur("browse")}>Browse</a>
         </nav>
         <div class="header-actions">
           <a class="btn btn-primary" href="editor.html">${icons.plus}New recipe</a>

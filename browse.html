@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse recipes | myonlyfoods</title>
+    <link rel="stylesheet" href="css/style.css?v=202611030518">
+</head>
+<body>
+<header id="site-header"></header>
+
+<main class="page">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title" id="title">Browse recipes</h1>
+            <p class="subtle" id="summary">Loading recipes from other cooks…</p>
+        </div>
+        <div style="flex: 0 1 380px; min-width: 220px;">
+            <label for="search" class="sr-only">Search shared recipes</label>
+            <div class="search-box">
+                <span id="search-icon"></span>
+                <input id="search" type="search" placeholder="Search dishes, ingredients or cooks">
+            </div>
+        </div>
+    </div>
+
+    <p class="cook-filter" id="cook-filter" hidden></p>
+
+    <div class="browse-filters">
+        <div class="pills" role="group" aria-label="Filter by meal type" id="pills"></div>
+        <div class="browse-row">
+            <label class="sr-only" for="cuisine">Cuisine</label>
+            <select class="input" id="cuisine"></select>
+            <label class="sr-only" for="sort">Sort by</label>
+            <select class="input" id="sort">
+                <option value="new">Newest</option>
+                <option value="liked">Most liked</option>
+                <option value="az">A to Z</option>
+            </select>
+            <button type="button" class="pill" id="videoOnly" aria-pressed="false">▶ Has video</button>
+            <button type="button" class="pill" id="hideMine" aria-pressed="false">Hide mine</button>
+        </div>
+    </div>
+
+    <div id="list" class="recipe-grid"><p class="loading">Loading…</p></div>
+    <div style="text-align: center; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" id="more" hidden>Show more</button>
+    </div>
+</main>
+
+<script type="module">
+    import { db, requireUser, renderHeader, esc, icons, photoHtml, friendlyError, CATEGORIES, CUISINES, likeCount, likePill, totalTime } from "./js/firebase.js?v=202611030518";
+    import { collection, getDocs, getDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const PAGE = 24;
+    const $ = (id) => document.getElementById(id);
+    renderHeader("browse");
+    $("search-icon").innerHTML = icons.search;
+
+    const params = new URLSearchParams(location.search);
+    const state = {
+        all: [],
+        q: params.get("q") || "",
+        category: "",
+        cuisine: "",
+        video: false,
+        hideMine: false,
+        sort: "new",
+        cook: params.get("cook") || "",
+        shown: PAGE,
+    };
+    const likes = {};          // recipe id -> like count
+    let hidden = new Set();    // recipes you marked "Not interested"
+    let user;
+
+    $("search").value = state.q;
+
+    try {
+        user = await requireUser();
+        const [snap, prefs] = await Promise.all([
+            getDocs(query(collection(db, "publicRecipes"), orderBy("updatedAt", "desc"), limit(300))),
+            getDoc(doc(db, "profiles", user.uid, "prefs", "suggestions")).catch(() => null),
+        ]);
+        hidden = new Set(((prefs && prefs.exists() && prefs.data().hidden) || [])
+            .filter((h) => h.startsWith("pub:")).map((h) => h.slice(4)));
+        state.all = snap.docs.map((d) => {
+            const r = { id: d.id, ...d.data() };
+            r.mine = r.ownerId === user.uid;
+            r.time = r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
+            r.cuisine = r.subCategory && r.subCategory !== "None" ? r.subCategory : "";
+            // One lowercase string to search through.
+            r.text = [r.title, r.description, r.ownerName, r.category, r.cuisine,
+                ...(r.ingredients || []).map((i) => typeof i === "string" ? i : (i && (i.name || i.text)) || "")]
+                .join(" ").toLowerCase();
+            return r;
+        });
+        setupFilters();
+        render();
+    } catch (err) {
+        $("summary").textContent = "";
+        $("list").innerHTML = `<div class="alert" role="alert">${esc(friendlyError(err))}</div>`;
+    }
+
+    function setupFilters() {
+        const used = new Set(state.all.map((r) => r.category));
+        const cats = CATEGORIES.filter((c) => used.has(c));
+        $("pills").innerHTML = ["All", ...cats].map((c) =>
+            `<button type="button" class="pill" data-cat="${c === "All" ? "" : esc(c)}" aria-pressed="${c === "All"}">${esc(c)}</button>`).join("");
+        $("pills").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+            state.category = b.dataset.cat;
+            $("pills").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+            reset();
+        }));
+
+        const cuisines = CUISINES.filter((c) => c !== "None");
+        $("cuisine").innerHTML = `<option value="">Any cuisine</option>` + cuisines.map((c) => `<option>${esc(c)}</option>`).join("");
+        $("cuisine").addEventListener("change", (e) => { state.cuisine = e.target.value; reset(); });
+
+        $("sort").addEventListener("change", async (e) => {
+            state.sort = e.target.value;
+            if (state.sort === "liked") {
+                $("list").innerHTML = '<p class="loading">Counting likes…</p>';
+                await loadLikes(filtered());
+            }
+            reset();
+        });
+
+        for (const [id, key] of [["videoOnly", "video"], ["hideMine", "hideMine"]]) {
+            $(id).addEventListener("click", () => {
+                state[key] = !state[key];
+                $(id).setAttribute("aria-pressed", state[key]);
+                reset();
+            });
+        }
+
+        let t;
+        $("search").addEventListener("input", (e) => {
+            clearTimeout(t);
+            t = setTimeout(() => { state.q = e.target.value; reset(); }, 150);
+        });
+
+        $("more").addEventListener("click", () => { state.shown += PAGE; render(); });
+
+        $("list").addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-cook]");
+            if (!btn) return;
+            e.preventDefault();
+            setCook(btn.dataset.cook);
+        });
+    }
+
+    function setCook(uid) {
+        state.cook = uid;
+        const url = new URL(location.href);
+        if (uid) url.searchParams.set("cook", uid); else url.searchParams.delete("cook");
+        history.replaceState(null, "", url);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        reset();
+    }
+
+    function reset() { state.shown = PAGE; render(); }
+
+    function filtered() {
+        const words = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+        return state.all.filter((r) =>
+            (!state.cook || r.ownerId === state.cook) &&
+            (state.cook || !hidden.has(r.id)) &&
+            (!state.hideMine || !r.mine) &&
+            (!state.category || r.category === state.category) &&
+            (!state.cuisine || r.cuisine === state.cuisine) &&
+            (!state.video || r.videoUrl) &&
+            words.every((w) => r.text.includes(w)));
+    }
+
+    async function loadLikes(list) {
+        const need = list.filter((r) => likes[r.id] === undefined);
+        // A few at a time so a big list doesn't flood the connection.
+        for (let i = 0; i < need.length; i += 20) {
+            await Promise.all(need.slice(i, i + 20).map((r) =>
+                likeCount(r.id).then((n) => { likes[r.id] = n; }).catch(() => { likes[r.id] = 0; })));
+        }
+    }
+
+    function sorted(list) {
+        const out = [...list];
+        if (state.sort === "az") out.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+        else if (state.sort === "liked") out.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0) || b.time - a.time);
+        else out.sort((a, b) => b.time - a.time);
+        return out;
+    }
+
+    function render() {
+        const list = sorted(filtered());
+        const total = state.all.filter((r) => state.cook ? r.ownerId === state.cook : !hidden.has(r.id)).length;
+
+        // "Recipes by …" heading when looking at one cook.
+        const cookBox = $("cook-filter");
+        if (state.cook) {
+            const any = state.all.find((r) => r.ownerId === state.cook);
+            const name = any ? (any.mine ? "you" : any.ownerName || "this cook") : "this cook";
+            $("title").textContent = `Recipes by ${name}`;
+            cookBox.innerHTML = `Showing only ${esc(name === "you" ? "your shared" : name + "'s")} recipes. <a href="#" id="clear-cook">See everyone's</a>`;
+            cookBox.hidden = false;
+            $("clear-cook").addEventListener("click", (e) => { e.preventDefault(); setCook(""); $("title").textContent = "Browse recipes"; });
+        } else {
+            $("title").textContent = "Browse recipes";
+            cookBox.hidden = true;
+        }
+
+        $("summary").textContent = state.all.length === 0
+            ? "No one has shared a recipe yet."
+            : list.length === total
+                ? `${total} shared ${total === 1 ? "recipe" : "recipes"} from the community`
+                : `${list.length} of ${total} shared recipes`;
+
+        const el = $("list");
+        if (state.all.length === 0) {
+            el.innerHTML = `<div class="empty">${icons.plate}<h2>Nothing here yet</h2><p>When cooks mark a recipe Public, it shows up here. Be the first: open one of your recipes, choose Edit, and set it to Public.</p><a class="btn btn-primary" href="dashboard.html">Go to my recipes</a></div>`;
+            $("more").hidden = true;
+            return;
+        }
+        if (!list.length) {
+            el.innerHTML = `<div class="empty"><p>No recipes match. Try fewer words or clear a filter.</p></div>`;
+            $("more").hidden = true;
+            return;
+        }
+
+        const page = list.slice(0, state.shown);
+        el.innerHTML = page.map(card).join("");
+        $("more").hidden = list.length <= state.shown;
+        $("more").textContent = `Show more (${list.length - state.shown} left)`;
+
+        // Fill in like counts for the cards on screen.
+        const missing = page.filter((r) => likes[r.id] === undefined);
+        if (missing.length) loadLikes(missing).then(() => {
+            page.forEach((r) => {
+                const slot = el.querySelector(`[data-likes="${CSS.escape(r.id)}"]`);
+                if (slot && likes[r.id]) slot.innerHTML = likePill(likes[r.id], true);
+            });
+        });
+    }
+
+    function card(r) {
+        const href = r.mine ? `recipe.html?id=${encodeURIComponent(r.id)}` : `recipe.html?pub=${encodeURIComponent(r.id)}`;
+        const eyebrow = [r.category, r.cuisine].filter(Boolean).map(esc).join(" · ");
+        const time = totalTime(r);
+        const by = r.mine
+            ? '<span class="badge badge-public">Yours</span>'
+            : `<button type="button" class="cook-link" data-cook="${esc(r.ownerId)}" title="See all of ${esc(r.ownerName || "this cook")}'s recipes">by ${esc(r.ownerName || "a home cook")}</button>`;
+        return `
+          <a class="recipe-card" href="${href}">
+            <div class="photo">${photoHtml(r.photoURL, "")}</div>
+            <div class="body">
+              <span class="eyebrow">${eyebrow}</span>
+              <h3>${esc(r.title || "Untitled recipe")}</h3>
+              <div class="by-line">${by}</div>
+              <div class="meta"><span>${esc(time)}</span><span style="display:flex; gap:6px; align-items:center;">${r.videoUrl ? '<span class="badge badge-video" title="Has a how-to video">▶ Video</span>' : ""}<span data-likes="${esc(r.id)}">${likes[r.id] ? likePill(likes[r.id], true) : ""}</span></span></div>
+            </div>
+          </a>`;
+    }
+</script>
+</body>
+</html>

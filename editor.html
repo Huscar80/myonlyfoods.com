@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New recipe | myonlyfoods</title>
-    <link rel="stylesheet" href="css/style.css?v=202611021613">
+    <link rel="stylesheet" href="css/style.css?v=202611030518">
 </head>
 <body>
 <header id="site-header"></header>
@@ -195,9 +195,9 @@
 </dialog>
 
 <script type="module">
-    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, parseVideoUrl, videoEmbedHtml, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611021613";
+    import { db, requireUser, renderHeader, esc, icons, normalizeRecipe, parseVideoUrl, videoEmbedHtml, CATEGORIES, CUISINES, shrinkImage, uploadImage, friendlyError, syncPublicRecipe } from "./js/firebase.js?v=202611030518";
     import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { readCard, parseRecipeText } from "./js/scan.js?v=202611021613";
+    import { readCard, parseRecipeText } from "./js/scan.js?v=202611030518";
 
     renderHeader("recipes");
     const $ = (id) => document.getElementById(id);
